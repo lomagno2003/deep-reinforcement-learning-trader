@@ -56,8 +56,6 @@ class Brain:
               total_timesteps: int = 25000):
         # TODO: Clean this
         training_environment = self._build_environment(training_scenario)
-        testing_environment = self._build_environment(testing_scenario) \
-            if testing_scenario is not None else training_environment
 
         env = DummyVecEnv([lambda: training_environment])
 
@@ -66,14 +64,18 @@ class Brain:
         else:
             self._model.set_env(env)
 
-        eval_callback = EvalCallback(testing_environment,
-                                     best_model_save_path='./logs/',
-                                     log_path='./logs/',
-                                     eval_freq=500,
-                                     deterministic=True,
-                                     render=False,
-                                     callback_on_new_best=CustomCallback(),
-                                     verbose=1)
+        eval_callback = None
+        if testing_scenario is not None:
+            testing_environment = self._build_environment(testing_scenario)
+
+            eval_callback = EvalCallback(testing_environment,
+                                         best_model_save_path='./logs/',
+                                         log_path='./logs/',
+                                         eval_freq=500,
+                                         deterministic=True,
+                                         render=False,
+                                         callback_on_new_best=CustomCallback(),
+                                         verbose=1)
 
         self._model.learn(total_timesteps=total_timesteps, callback=eval_callback)
 

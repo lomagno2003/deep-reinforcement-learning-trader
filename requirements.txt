@@ -5,3 +5,4 @@ gym-anytrading
 yfinance
 finta
 pandas
+pygad
