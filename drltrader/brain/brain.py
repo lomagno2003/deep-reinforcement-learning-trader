@@ -1,7 +1,8 @@
 import numpy as np
+import json
 
 import tensorflow as tf
-from stable_baselines.common.vec_env import DummyVecEnv
+from stable_baselines.common.vec_env import DummyVecEnv, VecNormalize
 from stable_baselines import A2C
 from matplotlib import pyplot as plt
 from stable_baselines.common.callbacks import EvalCallback
@@ -34,12 +35,15 @@ class BrainConfiguration:
                  second_layer_size: int = 256,
                  window_size: int = 12,
                  prices_feature_name: str = 'Low',
-                 signal_feature_names: list = ['Low', 'Volume', 'SMA', 'RSI', 'OBV']):
+                 signal_feature_names: list = ['Low', 'Volume']):
         self.first_layer_size = first_layer_size
         self.second_layer_size = second_layer_size
         self.window_size = window_size
         self.prices_feature_name = prices_feature_name
         self.signal_feature_names = signal_feature_names
+
+    def __str__(self):
+        return json.dumps(self.__dict__)
 
 
 class Brain:
@@ -57,7 +61,7 @@ class Brain:
         # TODO: Clean this
         training_environment = self._build_environment(training_scenario)
 
-        env = DummyVecEnv([lambda: training_environment])
+        env = VecNormalize(DummyVecEnv([lambda: training_environment]))
 
         if self._model is None:
             self._init_model(env)
@@ -75,7 +79,7 @@ class Brain:
                                          deterministic=True,
                                          render=False,
                                          callback_on_new_best=CustomCallback(),
-                                         verbose=1)
+                                         verbose=0)
 
         self._model.learn(total_timesteps=total_timesteps, callback=eval_callback)
 
@@ -85,10 +89,11 @@ class Brain:
                                        self._brain_configuration.first_layer_size,
                                        self._brain_configuration.second_layer_size])
 
-        self._model = A2C('MlpLstmPolicy', env, verbose=1, policy_kwargs=policy_kwargs)
+        self._model = A2C('MlpLstmPolicy', env, verbose=0, policy_kwargs=policy_kwargs)
 
     def test(self,
-             testing_scenario: Scenario):
+             testing_scenario: Scenario,
+             render=True):
         env = self._build_environment(scenario=testing_scenario)
 
         obs = env.reset()
@@ -97,13 +102,13 @@ class Brain:
             action, _states = self._model.predict(obs)
             obs, rewards, done, info = env.step(action)
             if done:
-                print("info", info)
                 break
 
-        plt.figure(figsize=(15, 6))
-        plt.cla()
-        env.render_all()
-        plt.show()
+        if render:
+            plt.figure(figsize=(15, 6))
+            plt.cla()
+            env.render_all()
+            plt.show()
 
         return info
 

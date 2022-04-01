@@ -1,4 +1,5 @@
 import yfinance as yf
+import pandas as pd
 from finta import TA
 
 from drltrader.data.scenario import Scenario
@@ -9,6 +10,10 @@ class DataProvider:
         self.indicator_column_names = None
 
         self._define_indicators()
+
+        # Populate indicator_column_names
+        df = pd.DataFrame(columns=['Open', 'High', 'Close', 'Low', 'Volume'])
+        self._calculate_indicators(df)
 
     def retrieve_data(self,
                       scenario: Scenario):

@@ -27,7 +27,7 @@ class BrainTestCase(unittest.TestCase):
 
         brain.learn(training_scenario=self.training_scenario,
                     testing_scenario=self.testing_scenario,
-                    total_timesteps=1000)
+                    total_timesteps=25000)
 
         results = brain.test(testing_scenario=self.testing_scenario)
 

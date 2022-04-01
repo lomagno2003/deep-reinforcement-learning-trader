@@ -1,12 +1,27 @@
 import pygad
 import json
-from datetime import datetime
-from datetime import timedelta
 
 from drltrader.brain.brain import BrainConfiguration
 from drltrader.brain.brain import Brain
 from drltrader.data.data_provider import DataProvider
-from drltrader.data.scenario import Scenario
+
+
+class TrainingConfiguration:
+    def __init__(self,
+                 training_scenarios: list,
+                 testing_scenarios: list,
+                 generations: int = 10,
+                 population: int = 8,
+                 parents_per_generation: int = 4,
+                 elite_per_generation: int = 2,
+                 total_timesteps_per_scenario: int = 1000):
+        self.generations = generations
+        self.population = population
+        self.parents_per_generation = parents_per_generation
+        self.elite_per_generation = elite_per_generation
+        self.training_scenarios = training_scenarios
+        self.testing_scenarios = testing_scenarios
+        self.total_timesteps_per_scenario = total_timesteps_per_scenario
 
 
 class EvolutionaryTrainer:
@@ -31,20 +46,32 @@ class EvolutionaryTrainer:
 
         self.data_provider = data_provider
 
+        self.training_configuration: TrainingConfiguration = None
+        self.generation = None
+
+    def train(self, training_configuration: TrainingConfiguration) -> BrainConfiguration:
+        self.generation = 0
+        self.training_configuration = training_configuration
+        self._initialize_genetic_algorithm()
+
+        self.genetic_algorithm.run()
+        return EvolutionaryTrainer._get_brain_configuration_from_dna(self, self.genetic_algorithm.best_solutions[0])
+
+    def _initialize_genetic_algorithm(self):
         genes = len(self.data_provider.indicator_column_names) + 3
-        self.genetic_algorithm = pygad.GA(num_generations=2,
+        self.genetic_algorithm = pygad.GA(num_generations=self.training_configuration.generations,
                                           num_genes=genes,
                                           init_range_low=0.0,
                                           init_range_high=1.0,
-                                          sol_per_pop=2,
+                                          sol_per_pop=self.training_configuration.population,
                                           save_best_solutions=True,
 
                                           fitness_func=EvolutionaryTrainer._evaluate_fitness,
                                           on_generation=EvolutionaryTrainer._on_generation,
 
                                           crossover_type='uniform',
-                                          num_parents_mating=2,
-                                          keep_parents=2,
+                                          num_parents_mating=self.training_configuration.parents_per_generation,
+                                          keep_parents=self.training_configuration.elite_per_generation,
 
                                           mutation_type='random',
                                           mutation_by_replacement=True,
@@ -52,40 +79,44 @@ class EvolutionaryTrainer:
                                           random_mutation_min_val=0.0,
                                           random_mutation_max_val=1.0)
 
-        # TODO: Clean this
-        self.training_scenario = Scenario(symbol='TSLA',
-                                          start_date=datetime.now() - timedelta(days=30),
-                                          end_date=datetime.now())
-        self.testing_scenario = Scenario(symbol='TSLA',
-                                         start_date=datetime.now() - timedelta(days=1),
-                                         end_date=datetime.now())
-
-    def train(self) -> BrainConfiguration:
-        self.genetic_algorithm.run()
-
-        return EvolutionaryTrainer._get_brain_configuration_from_dna(self, self.genetic_algorithm.best_solutions[0])
-
     @staticmethod
     def _on_generation(ga_instance):
-        pass
+        trainer: EvolutionaryTrainer = EvolutionaryTrainer.INSTANCE
+
+        trainer.generation += 1
+
+        print(f"Generation {trainer.generation} finished")
 
     @staticmethod
     def _evaluate_fitness(solution, solution_idx):
         trainer: EvolutionaryTrainer = EvolutionaryTrainer.INSTANCE
         brain_configuration = EvolutionaryTrainer._get_brain_configuration_from_dna(trainer, solution)
 
+        print(f"Solution {solution_idx} of generation {trainer.generation}")
+        print(f"Brain Configuration: {brain_configuration}")
+        print("Calculating fitness")
+
         brain: Brain = Brain(data_provider=trainer.data_provider,
                              brain_configuration=brain_configuration)
 
-        brain.learn(training_scenario=trainer.training_scenario,
-                    total_timesteps=1000)
+        for training_scenario in trainer.training_configuration.training_scenarios:
+            print(f"Training on scenario {training_scenario}")
+            brain.learn(training_scenario=training_scenario,
+                        total_timesteps=trainer.training_configuration.total_timesteps_per_scenario)
+            print(f"Training finished")
 
-        results = brain.test(testing_scenario=trainer.testing_scenario)
+        mean_testing_profit = 0.0
+        for testing_scenario in trainer.training_configuration.testing_scenarios:
+            print(f"Testing on scenario {testing_scenario}")
+            profit = brain.test(testing_scenario=testing_scenario)['total_profit']
+            print(f"Testing finished with profit {profit}")
+            mean_testing_profit += profit
 
-        print(f"Brain Configuration: {json.dumps(brain_configuration.__dict__)}")
-        print(f"Evaluation Profit: {results['total_profit']}")
+        mean_testing_profit = mean_testing_profit / len(trainer.training_configuration.testing_scenarios)
 
-        return results['total_profit']
+        print(f"Evaluation Profit: {mean_testing_profit}")
+
+        return mean_testing_profit
 
     @staticmethod
     def _get_brain_configuration_from_dna(trainer, dna):
