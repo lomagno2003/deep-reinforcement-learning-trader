@@ -1,0 +1,7 @@
+tensorflow
+stable-baselines
+gym
+gym-anytrading
+yfinance
+finta
+pandas
