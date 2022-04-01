@@ -1,9 +1,14 @@
 import pygad
-import json
+import logging
 
 from drltrader.brain.brain import BrainConfiguration
 from drltrader.brain.brain import Brain
 from drltrader.data.data_provider import DataProvider
+
+logging.basicConfig(format='%(asctime)s %(message)s',
+                    filename='logs/training.log',
+                    encoding='utf-8',
+                    level=logging.DEBUG)
 
 
 class TrainingConfiguration:
@@ -85,36 +90,36 @@ class EvolutionaryTrainer:
 
         trainer.generation += 1
 
-        print(f"Generation {trainer.generation} finished")
+        logging.info(f"Generation {trainer.generation} finished")
 
     @staticmethod
     def _evaluate_fitness(solution, solution_idx):
         trainer: EvolutionaryTrainer = EvolutionaryTrainer.INSTANCE
         brain_configuration = EvolutionaryTrainer._get_brain_configuration_from_dna(trainer, solution)
 
-        print(f"Solution {solution_idx} of generation {trainer.generation}")
-        print(f"Brain Configuration: {brain_configuration}")
-        print("Calculating fitness")
+        logging.info(f"Solution {solution_idx} of generation {trainer.generation}")
+        logging.info(f"Brain Configuration: {brain_configuration}")
+        logging.info("Calculating fitness")
 
         brain: Brain = Brain(data_provider=trainer.data_provider,
                              brain_configuration=brain_configuration)
 
         for training_scenario in trainer.training_configuration.training_scenarios:
-            print(f"Training on scenario {training_scenario}")
+            logging.info(f"Training on scenario {training_scenario}")
             brain.learn(training_scenario=training_scenario,
                         total_timesteps=trainer.training_configuration.total_timesteps_per_scenario)
-            print(f"Training finished")
+            logging.info(f"Training finished")
 
         mean_testing_profit = 0.0
         for testing_scenario in trainer.training_configuration.testing_scenarios:
-            print(f"Testing on scenario {testing_scenario}")
+            logging.info(f"Testing on scenario {testing_scenario}")
             profit = brain.test(testing_scenario=testing_scenario)['total_profit']
-            print(f"Testing finished with profit {profit}")
+            logging.info(f"Testing finished with profit {profit}")
             mean_testing_profit += profit
 
         mean_testing_profit = mean_testing_profit / len(trainer.training_configuration.testing_scenarios)
 
-        print(f"Evaluation Profit: {mean_testing_profit}")
+        logging.info(f"Evaluation Profit: {mean_testing_profit}")
 
         return mean_testing_profit
 

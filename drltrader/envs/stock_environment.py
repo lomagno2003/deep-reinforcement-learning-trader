@@ -2,9 +2,16 @@ from gym_anytrading.envs import StocksEnv, Positions, Actions
 
 
 class SingleStocksEnv(StocksEnv):
-    def __init__(self, df, window_size, frame_bound, prices_feature_name, signal_features_names):
+    def __init__(self,
+                 df,
+                 window_size,
+                 frame_bound,
+                 prices_feature_name,
+                 signal_features_names,
+                 reset_enabled: bool = True):
         self._prices_feature_name = prices_feature_name
         self._signal_features_names = signal_features_names
+        self._reset_enabled = reset_enabled
 
         super().__init__(df, window_size, frame_bound)
 
@@ -60,3 +67,12 @@ class SingleStocksEnv(StocksEnv):
         last_trade_price = self.prices[self._last_trade_tick]
         shares = (self._total_profit * (1 - self.trade_fee_ask_percent)) / last_trade_price
         return (shares * (1 - self.trade_fee_bid_percent)) * current_price
+
+    def disable_reset(self):
+        self._reset_enabled = False
+
+    def reset(self):
+        if self._reset_enabled:
+            return super().reset()
+        else:
+            return self._get_observation()

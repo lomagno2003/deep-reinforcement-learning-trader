@@ -57,16 +57,13 @@ class Brain:
     def learn(self,
               training_scenario: Scenario,
               testing_scenario: Scenario = None,
-              total_timesteps: int = 25000):
-        # TODO: Clean this
+              total_timesteps: int = 1000):
         training_environment = self._build_environment(training_scenario)
 
-        env = VecNormalize(DummyVecEnv([lambda: training_environment]))
-
         if self._model is None:
-            self._init_model(env)
+            self._init_model(training_environment)
         else:
-            self._model.set_env(env)
+            self._model.set_env(training_environment)
 
         eval_callback = None
         if testing_scenario is not None:
@@ -94,30 +91,35 @@ class Brain:
     def test(self,
              testing_scenario: Scenario,
              render=True):
-        env = self._build_environment(scenario=testing_scenario)
+        testing_environment = self._build_environment(scenario=testing_scenario)
 
-        obs = env.reset()
+        obs = testing_environment.reset()
+
+        # FIXME: This needs to be done because the VecEnvs auto-calls the reset on done==true
+        testing_environment.venv.envs[0].disable_reset()
+
         while True:
             obs = obs[np.newaxis, ...]
-            action, _states = self._model.predict(obs)
-            obs, rewards, done, info = env.step(action)
-            if done:
+            action, _states = self._model.predict(obs[0])
+            obs, rewards, done, info = testing_environment.step(action)
+            if done[0]:
                 break
 
         if render:
             plt.figure(figsize=(15, 6))
             plt.cla()
-            env.render_all()
+            testing_environment.venv.envs[0].render_all()
             plt.show()
 
         return info
 
-    def _build_environment(self, scenario: Scenario):
+    def _build_environment(self, scenario: Scenario, reset_enabled: bool = True):
         symbol_dataframe = self._data_provider.retrieve_data(scenario)
         env = SingleStocksEnv(df=symbol_dataframe,
                               window_size=self._brain_configuration.window_size,
                               frame_bound=(self._brain_configuration.window_size, len(symbol_dataframe.index) - 1),
                               prices_feature_name=self._brain_configuration.prices_feature_name,
-                              signal_features_names=self._brain_configuration.signal_feature_names)
+                              signal_features_names=self._brain_configuration.signal_feature_names,
+                              reset_enabled=reset_enabled)
 
-        return env
+        return VecNormalize(DummyVecEnv([lambda: env]))

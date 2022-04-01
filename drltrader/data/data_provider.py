@@ -6,22 +6,25 @@ from drltrader.data.scenario import Scenario
 
 
 class DataProvider:
-    def __init__(self):
+    def __init__(self,
+                 cache_enabled: bool = True):
         self.indicator_column_names = None
-
+        self._cache = {}
+        self._cache_enabled = cache_enabled
         self._define_indicators()
-
-        # Populate indicator_column_names
-        df = pd.DataFrame(columns=['Open', 'High', 'Close', 'Low', 'Volume'])
-        self._calculate_indicators(df)
 
     def retrieve_data(self,
                       scenario: Scenario):
-        df = self._fetch_data(scenario)
+        if self._cache_enabled and str(scenario) in self._cache:
+            return self._cache[str(scenario)]
+        else:
+            df = self._fetch_data(scenario)
+            self._calculate_indicators(df)
 
-        self._calculate_indicators(df)
+            if self._cache_enabled:
+                self._cache[str(scenario)] = df
 
-        return df
+            return df
 
     def _define_indicators(self):
         self.indicators_function = {}
@@ -69,6 +72,10 @@ class DataProvider:
             "roc_period": [12],
             "atr_period": [26]
         }
+
+        # Populate indicator_column_names
+        df = pd.DataFrame(columns=['Open', 'High', 'Close', 'Low', 'Volume'])
+        self._calculate_indicators(df)
 
     def _calculate_indicators(self, df):
         all_indicator_columns_names = []
