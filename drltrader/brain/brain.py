@@ -111,7 +111,7 @@ class Brain:
             testing_environment.venv.envs[0].render_all()
             plt.show()
 
-        return info
+        return info[0]
 
     def _build_environment(self, scenario: Scenario, reset_enabled: bool = True):
         symbol_dataframe = self._data_provider.retrieve_data(scenario)

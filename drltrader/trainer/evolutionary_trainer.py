@@ -1,3 +1,4 @@
+import pandas as pd
 import pygad
 import logging
 
@@ -19,7 +20,8 @@ class TrainingConfiguration:
                  population: int = 8,
                  parents_per_generation: int = 4,
                  elite_per_generation: int = 2,
-                 total_timesteps_per_scenario: int = 1000):
+                 total_timesteps_per_scenario: int = 1000,
+                 solutions_statistics_filename: str = None):
         self.generations = generations
         self.population = population
         self.parents_per_generation = parents_per_generation
@@ -27,6 +29,7 @@ class TrainingConfiguration:
         self.training_scenarios = training_scenarios
         self.testing_scenarios = testing_scenarios
         self.total_timesteps_per_scenario = total_timesteps_per_scenario
+        self.solutions_statistics_filename = solutions_statistics_filename
 
 
 class EvolutionaryTrainer:
@@ -53,9 +56,11 @@ class EvolutionaryTrainer:
 
         self.training_configuration: TrainingConfiguration = None
         self.generation = None
+        self.solutions_statistics: pd.DataFrame = None
 
     def train(self, training_configuration: TrainingConfiguration) -> BrainConfiguration:
         self.generation = 0
+        self.solutions_statistics = pd.DataFrame(columns=['Profit', 'Brain Configuration'])
         self.training_configuration = training_configuration
         self._initialize_genetic_algorithm()
 
@@ -90,14 +95,16 @@ class EvolutionaryTrainer:
 
         trainer.generation += 1
 
-        logging.info(f"Generation {trainer.generation} finished")
+        logging.info(f"Generation {trainer.generation} finished. Here are the results:")
+        logging.info('\t' + trainer.solutions_statistics.to_string().replace('\n', '\n\t'))
 
     @staticmethod
     def _evaluate_fitness(solution, solution_idx):
         trainer: EvolutionaryTrainer = EvolutionaryTrainer.INSTANCE
         brain_configuration = EvolutionaryTrainer._get_brain_configuration_from_dna(trainer, solution)
+        solution_name = f"{trainer.generation}_{solution_idx}"
 
-        logging.info(f"Solution {solution_idx} of generation {trainer.generation}")
+        logging.info(f"Solution {solution_name}")
         logging.info(f"Brain Configuration: {brain_configuration}")
         logging.info("Calculating fitness")
 
@@ -118,6 +125,12 @@ class EvolutionaryTrainer:
             mean_testing_profit += profit
 
         mean_testing_profit = mean_testing_profit / len(trainer.training_configuration.testing_scenarios)
+
+        trainer.solutions_statistics.at[solution_name, 'Profit'] = mean_testing_profit
+        trainer.solutions_statistics.at[solution_name, 'Brain Configuration'] = brain_configuration
+        trainer.solutions_statistics.sort_values(by='Profit', inplace=True, ascending=False)
+        if trainer.training_configuration.solutions_statistics_filename is not None:
+            trainer.solutions_statistics.to_csv(trainer.training_configuration.solutions_statistics_filename)
 
         logging.info(f"Evaluation Profit: {mean_testing_profit}")
 
