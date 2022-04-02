@@ -11,8 +11,10 @@ from stable_baselines.common.callbacks import BaseCallback
 from drltrader.data.data_provider import DataProvider
 from drltrader.data.scenario import Scenario
 from drltrader.envs.single_stock_env import SingleStockEnv
+from drltrader.envs.portfolio_stocks_env import PortfolioStocksEnv
 
 
+# FIXME: This callback doesn't work with PorfolioStocksEnv
 class CustomCallback(BaseCallback):
     def _on_step(self):
         if not hasattr(self, 'infos'):
@@ -52,9 +54,13 @@ class Brain:
     def __init__(self,
                  data_provider: DataProvider = DataProvider(),
                  brain_configuration: BrainConfiguration = BrainConfiguration()):
+        # Store Configurations
         self._data_provider = data_provider
-        self._model = None
         self._brain_configuration = brain_configuration
+
+        # Initialize Runtime Variables
+        self._model = None
+        self._using_multi_symbol_scenarios = None
 
     def learn(self,
               training_scenario: Scenario,
@@ -120,15 +126,41 @@ class Brain:
 
         return info[0]
 
-    def _build_environment(self, scenario: Scenario, reset_enabled: bool = True):
+    def _build_environment(self, scenario: Scenario):
+        env = None
+        if scenario.symbols is not None:
+            env = self._build_portfolio_stock_scenario(scenario)
+        else:
+            env = self._build_single_stock_scenario(scenario)
+
+        if self._brain_configuration.use_normalized_observations:
+            return VecNormalize(DummyVecEnv([lambda: env]))
+        else:
+            return DummyVecEnv([lambda: env])
+
+    def _build_single_stock_scenario(self, scenario: Scenario):
         symbol_dataframe = self._data_provider.retrieve_data(scenario)
         env = SingleStockEnv(df=symbol_dataframe,
                              window_size=self._brain_configuration.window_size,
                              frame_bound=(self._brain_configuration.window_size, len(symbol_dataframe.index) - 1),
                              prices_feature_name=self._brain_configuration.prices_feature_name,
-                             signal_features_names=self._brain_configuration.signal_feature_names,
-                             reset_enabled=reset_enabled)
-        if self._brain_configuration.use_normalized_observations:
-            return VecNormalize(DummyVecEnv([lambda: env]))
-        else:
-            return DummyVecEnv([lambda: env])
+                             signal_feature_names=self._brain_configuration.signal_feature_names)
+
+        return env
+
+    def _build_portfolio_stock_scenario(self, scenario: Scenario):
+        dataframe_per_symbol = self._data_provider.retrieve_datas(scenario)
+        first_symbol = list(dataframe_per_symbol.keys())[0]
+
+        start_tick = self._brain_configuration.window_size
+        end_tick = len(dataframe_per_symbol[first_symbol].index) - 1
+        initial_portfolio_allocation = {first_symbol: 1.0} # FIXME: This is not configurable
+
+        env = PortfolioStocksEnv(initial_portfolio_allocation=initial_portfolio_allocation,
+                                 dataframe_per_symbol=dataframe_per_symbol,
+                                 window_size=self._brain_configuration.window_size,
+                                 frame_bound=(start_tick, end_tick),
+                                 prices_feature_name=self._brain_configuration.prices_feature_name,
+                                 signal_feature_names=self._brain_configuration.signal_feature_names)
+
+        return env

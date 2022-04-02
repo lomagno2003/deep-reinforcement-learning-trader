@@ -19,8 +19,14 @@ class DataProvider:
         self._cache_enabled = cache_enabled
         self._define_indicators()
 
-    def retrieve_data(self,
-                      scenario: Scenario):
+    def retrieve_datas(self, scenario: Scenario):
+        dataframe_per_symbol = {}
+        for symbol in scenario.symbols:
+            dataframe_per_symbol[symbol] = self.retrieve_data(scenario.clone_with_symbol(symbol))
+
+        return dataframe_per_symbol
+
+    def retrieve_data(self, scenario: Scenario):
         if self._cache_enabled and str(scenario) in self._cache:
             logging.info(f"Data for scenario {scenario} available on cache. Returning saved version...")
             return self._cache[str(scenario)]

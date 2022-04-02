@@ -24,6 +24,7 @@ class PortfolioStocksEnv(gym.Env):
         self._signal_feature_names = signal_feature_names
 
         # Initialize Custom Configurations
+        self._reset_enabled = True
         self._prices_per_symbol, self._signal_features_per_symbol = self._initialize_prices_and_features()
         self._action_to_symbol = {}
         for symbol in dataframe_per_symbol:
@@ -54,11 +55,18 @@ class PortfolioStocksEnv(gym.Env):
         observation = self._get_observation(self._current_tick)
         reward = self.current_profit()
         done = self._current_tick == self._frame_bound[1]
-        info = None
+        info = {
+            'current_profit': self.current_profit(),
+            'current_portfolio_value': self.current_portfolio_value(),
+            'portfolio_allocation': self._portfolio_allocation
+        }
 
         return observation, reward, done, info
 
     def reset(self):
+        if not self._reset_enabled:
+            return
+
         self._current_tick = self._frame_bound[0]
         self._portfolio_allocation = {}
 
@@ -70,7 +78,14 @@ class PortfolioStocksEnv(gym.Env):
 
         return self._get_observation(self._current_tick)
 
+    def disable_reset(self):
+        self._reset_enabled = False
+
     def render(self, mode='human'):
+        # TODO: Stub-method
+        pass
+
+    def render_all(self):
         # TODO: Stub-method
         pass
 

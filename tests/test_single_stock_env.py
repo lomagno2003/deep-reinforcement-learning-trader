@@ -20,7 +20,7 @@ class SingleStockEnvTestCase(unittest.TestCase):
                                      window_size=12,
                                      frame_bound=(12, len(symbol_dataframe.index) - 1),
                                      prices_feature_name='Close',
-                                     signal_features_names=['RSI_6'])
+                                     signal_feature_names=['RSI_6'])
 
         # Assert
         self.assertIsNotNone(environment)

@@ -72,25 +72,11 @@ class PortfolioStocksEnvTestCase(unittest.TestCase):
         self.assertNotEqual(1.0, current_profit)
 
     def _build_testing_dataframe_per_symbol(self):
-        tsla_scenario = Scenario(symbol='TSLA',
-                                 start_date=datetime.now() - timedelta(days=30),
-                                 end_date=datetime.now())
-        msft_scenario = Scenario(symbol='MSFT',
-                                 start_date=datetime.now() - timedelta(days=30),
-                                 end_date=datetime.now())
-        aapl_scenario = Scenario(symbol='AAPL',
-                                 start_date=datetime.now() - timedelta(days=30),
-                                 end_date=datetime.now())
+        scenario = Scenario(symbols=['TSLA', 'MSFT', 'AAPL'],
+                            start_date=datetime.now() - timedelta(days=30),
+                            end_date=datetime.now())
 
-        tsla_dataframe = DataProvider().retrieve_data(tsla_scenario)
-        msft_dataframe = DataProvider().retrieve_data(msft_scenario)
-        aapl_dataframe = DataProvider().retrieve_data(aapl_scenario)
-
-        dataframe_per_symbol = {
-            'TSLA': tsla_dataframe,
-            'MSFT': msft_dataframe,
-            'AAPL': aapl_dataframe
-        }
+        dataframe_per_symbol = DataProvider().retrieve_datas(scenario)
 
         return dataframe_per_symbol
 

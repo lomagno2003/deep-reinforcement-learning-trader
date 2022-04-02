@@ -7,10 +7,10 @@ class SingleStockEnv(StocksEnv):
                  window_size,
                  frame_bound,
                  prices_feature_name,
-                 signal_features_names,
+                 signal_feature_names,
                  reset_enabled: bool = True):
         self._prices_feature_name = prices_feature_name
-        self._signal_features_names = signal_features_names
+        self._signal_feature_names = signal_feature_names
         self._reset_enabled = reset_enabled
 
         super().__init__(df, window_size, frame_bound)
@@ -26,7 +26,7 @@ class SingleStockEnv(StocksEnv):
         start = self.frame_bound[0] - self.window_size
         end = self.frame_bound[1]
         prices = self.df.loc[:, self._prices_feature_name].to_numpy()[start:end]
-        signal_features = self.df.loc[:, ['Current Profit', 'Position Start Time'] + self._signal_features_names].to_numpy()[start:end]
+        signal_features = self.df.loc[:, ['Current Profit', 'Position Start Time'] + self._signal_feature_names].to_numpy()[start:end]
         return prices, signal_features
 
     def _calculate_reward(self, action):
