@@ -56,7 +56,8 @@ class BrainTestCase(unittest.TestCase):
         brain: Brain = Brain()
 
         # Act
-        brain.learn(training_scenario=self.training_scenario_multi_stock)
+        brain.learn(training_scenario=self.training_scenario_multi_stock,
+                    total_timesteps=20000)
         results = brain.test(testing_scenario=self.testing_scenario_multi_stock)
 
         # Assert
