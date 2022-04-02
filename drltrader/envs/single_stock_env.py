@@ -1,7 +1,7 @@
 from gym_anytrading.envs import StocksEnv, Positions, Actions
 
 
-class SingleStocksEnv(StocksEnv):
+class SingleStockEnv(StocksEnv):
     def __init__(self,
                  df,
                  window_size,
