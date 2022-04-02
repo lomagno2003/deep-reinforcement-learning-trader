@@ -27,12 +27,7 @@ class EvolutionaryTrainerTestCase(unittest.TestCase):
                                       start_date=datetime.now() - timedelta(days=2),
                                       end_date=datetime.now())]
         training_configuration = TrainingConfiguration(training_scenarios=training_scenarios,
-                                                       testing_scenarios=testing_scenarios,
-                                                       total_timesteps_per_scenario=1000,
-                                                       generations=1,
-                                                       population=4,
-                                                       parents_per_generation=2,
-                                                       elite_per_generation=0)
+                                                       testing_scenarios=testing_scenarios)
 
         # Act
         best_brain_configuration: BrainConfiguration = trainer.train(training_configuration)
@@ -62,8 +57,13 @@ class EvolutionaryTrainerTestCase(unittest.TestCase):
                              ]
         training_configuration = TrainingConfiguration(training_scenarios=training_scenarios,
                                                        testing_scenarios=testing_scenarios,
-                                                       total_timesteps_per_scenario=10000,
                                                        generations=100,
+                                                       start_population=20,
+                                                       stop_population=5,
+                                                       step_population=-1,
+                                                       start_timesteps=1000,
+                                                       stop_timesteps=10000,
+                                                       step_timesteps=500,
                                                        solutions_statistics_filename='logs/solutions.csv')
 
         # Act

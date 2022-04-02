@@ -16,19 +16,29 @@ class TrainingConfiguration:
     def __init__(self,
                  training_scenarios: list,
                  testing_scenarios: list,
-                 generations: int = 10,
-                 population: int = 8,
-                 parents_per_generation: int = 4,
-                 elite_per_generation: int = 2,
-                 total_timesteps_per_scenario: int = 1000,
+                 generations: int = 2,
+                 parents_per_generation: int = 2,
+                 start_population: int = 6,
+                 stop_population: int = 4,
+                 step_population: int = -1,
+                 start_timesteps: int = 1000,
+                 stop_timesteps: int = 1500,
+                 step_timesteps: int = 500,
                  solutions_statistics_filename: str = None):
-        self.generations = generations
-        self.population = population
-        self.parents_per_generation = parents_per_generation
-        self.elite_per_generation = elite_per_generation
         self.training_scenarios = training_scenarios
         self.testing_scenarios = testing_scenarios
-        self.total_timesteps_per_scenario = total_timesteps_per_scenario
+
+        self.generations = generations
+        self.parents_per_generation = parents_per_generation
+
+        self.start_population = start_population
+        self.stop_population = stop_population + 1
+        self.step_population = step_population
+
+        self.start_timesteps = start_timesteps
+        self.stop_timesteps = stop_timesteps + 1
+        self.step_timesteps = step_timesteps
+
         self.solutions_statistics_filename = solutions_statistics_filename
 
 
@@ -55,13 +65,17 @@ class EvolutionaryTrainer:
         self.data_provider = data_provider
 
         self.training_configuration: TrainingConfiguration = None
-        self.generation = None
+        self.fitness_cache = None
         self.solutions_statistics: pd.DataFrame = None
+        self.current_population = None
+        self.current_timestep = None
 
     def train(self, training_configuration: TrainingConfiguration) -> BrainConfiguration:
-        self.generation = 0
+        self.fitness_cache = {}
         self.solutions_statistics = pd.DataFrame(columns=['Profit', 'Brain Configuration'])
         self.training_configuration = training_configuration
+        self.current_population = self.training_configuration.start_population
+        self.current_timesteps = self.training_configuration.start_timesteps
         self._initialize_genetic_algorithm()
 
         self.genetic_algorithm.run()
@@ -73,7 +87,7 @@ class EvolutionaryTrainer:
                                           num_genes=genes,
                                           init_range_low=0.0,
                                           init_range_high=1.0,
-                                          sol_per_pop=self.training_configuration.population,
+                                          sol_per_pop=self.current_population,
                                           save_best_solutions=True,
 
                                           fitness_func=EvolutionaryTrainer._evaluate_fitness,
@@ -81,7 +95,7 @@ class EvolutionaryTrainer:
 
                                           crossover_type='uniform',
                                           num_parents_mating=self.training_configuration.parents_per_generation,
-                                          keep_parents=self.training_configuration.elite_per_generation,
+                                          keep_parents=0,
 
                                           mutation_type='random',
                                           mutation_by_replacement=True,
@@ -93,48 +107,71 @@ class EvolutionaryTrainer:
     def _on_generation(ga_instance):
         trainer: EvolutionaryTrainer = EvolutionaryTrainer.INSTANCE
 
-        trainer.generation += 1
-
-        logging.info(f"Generation {trainer.generation} finished. Here are the results:")
+        logging.info(f"Generation {trainer.genetic_algorithm.generations_completed} finished. Here are the results:")
         logging.info('\t' + trainer.solutions_statistics.to_string().replace('\n', '\n\t'))
+
+        # Update Population
+        current_population_values = list(range(trainer.training_configuration.start_population,
+                                               trainer.training_configuration.stop_population,
+                                               trainer.training_configuration.step_population))
+        current_population_idx = min(trainer.genetic_algorithm.generations_completed,
+                                     len(current_population_values) - 1)
+        trainer.current_population = current_population_values[current_population_idx]
+        trainer.genetic_algorithm.num_offspring = trainer.current_population
+
+        # Update Timesteps
+        current_timesteps_values = list(range(trainer.training_configuration.start_timesteps,
+                                              trainer.training_configuration.stop_timesteps,
+                                              trainer.training_configuration.step_timesteps))
+        current_timesteps_idx = min(trainer.genetic_algorithm.generations_completed,
+                                    len(current_timesteps_values) - 1)
+        trainer.current_timesteps = current_timesteps_values[current_timesteps_idx]
+
+        logging.info(f"New population: {trainer.current_population}. New timesteps: {trainer.current_timesteps}")
 
     @staticmethod
     def _evaluate_fitness(solution, solution_idx):
         trainer: EvolutionaryTrainer = EvolutionaryTrainer.INSTANCE
         brain_configuration = EvolutionaryTrainer._get_brain_configuration_from_dna(trainer, solution)
-        solution_name = f"{trainer.generation}_{solution_idx}"
+        solution_name = f"{trainer.genetic_algorithm.generations_completed}_{solution_idx}"
 
         logging.info(f"Solution {solution_name}")
         logging.info(f"Brain Configuration: {brain_configuration}")
-        logging.info("Calculating fitness")
 
-        brain: Brain = Brain(data_provider=trainer.data_provider,
-                             brain_configuration=brain_configuration)
+        if solution_name not in trainer.fitness_cache:
+            logging.info("Fitness not in cache, calculating fitness...")
 
-        for training_scenario in trainer.training_configuration.training_scenarios:
-            logging.info(f"Training on scenario {training_scenario}")
-            brain.learn(training_scenario=training_scenario,
-                        total_timesteps=trainer.training_configuration.total_timesteps_per_scenario)
-            logging.info(f"Training finished")
+            brain: Brain = Brain(data_provider=trainer.data_provider,
+                                 brain_configuration=brain_configuration)
 
-        mean_testing_profit = 0.0
-        for testing_scenario in trainer.training_configuration.testing_scenarios:
-            logging.info(f"Testing on scenario {testing_scenario}")
-            profit = brain.test(testing_scenario=testing_scenario)['total_profit']
-            logging.info(f"Testing finished with profit {profit}")
-            mean_testing_profit += profit
+            for training_scenario in trainer.training_configuration.training_scenarios:
+                logging.info(f"Training on scenario {training_scenario} with {trainer.current_timesteps} timesteps")
+                brain.learn(training_scenario=training_scenario,
+                            total_timesteps=trainer.current_timesteps)
+                logging.info(f"Training finished")
 
-        mean_testing_profit = mean_testing_profit / len(trainer.training_configuration.testing_scenarios)
+            mean_testing_profit = 0.0
+            for testing_scenario in trainer.training_configuration.testing_scenarios:
+                logging.info(f"Testing on scenario {testing_scenario}")
+                profit = brain.test(testing_scenario=testing_scenario)['total_profit']
+                logging.info(f"Testing finished with profit {profit}")
+                mean_testing_profit += profit
 
-        trainer.solutions_statistics.at[solution_name, 'Profit'] = mean_testing_profit
-        trainer.solutions_statistics.at[solution_name, 'Brain Configuration'] = brain_configuration
-        trainer.solutions_statistics.sort_values(by='Profit', inplace=True, ascending=False)
-        if trainer.training_configuration.solutions_statistics_filename is not None:
-            trainer.solutions_statistics.to_csv(trainer.training_configuration.solutions_statistics_filename)
+            mean_testing_profit = mean_testing_profit / len(trainer.training_configuration.testing_scenarios)
 
-        logging.info(f"Evaluation Profit: {mean_testing_profit}")
+            trainer.solutions_statistics.at[solution_name, 'Profit'] = mean_testing_profit
+            trainer.solutions_statistics.at[solution_name, 'Brain Configuration'] = brain_configuration
+            trainer.solutions_statistics.sort_values(by='Profit', inplace=True, ascending=False)
+            if trainer.training_configuration.solutions_statistics_filename is not None:
+                trainer.solutions_statistics.to_csv(trainer.training_configuration.solutions_statistics_filename)
 
-        return mean_testing_profit
+            logging.info(f"Evaluation Profit: {mean_testing_profit}")
+            trainer.fitness_cache[solution_name] = mean_testing_profit
+
+            return mean_testing_profit
+        else:
+            logging.info("Fitness in cache, returning saved fitness...")
+            return trainer.fitness_cache[solution_name]
 
     @staticmethod
     def _get_brain_configuration_from_dna(trainer, dna):
