@@ -9,8 +9,8 @@ class BrainTestCase(unittest.TestCase):
     def __init__(self, name):
         super(BrainTestCase, self).__init__(name)
 
-        start_day = 18
-        end_day = start_day + 1
+        start_day = 13
+        end_day = start_day + 4
         self.training_scenario_single_stock = Scenario(symbol='TSLA',
                                                        start_date=datetime(year=2022, month=3, day=start_day),
                                                        end_date=datetime(year=2022, month=3, day=end_day))
@@ -56,8 +56,7 @@ class BrainTestCase(unittest.TestCase):
         brain: Brain = Brain()
 
         # Act
-        brain.learn(training_scenario=self.training_scenario_multi_stock,
-                    total_timesteps=20000)
+        brain.learn(training_scenario=self.training_scenario_multi_stock)
         results = brain.test(testing_scenario=self.testing_scenario_multi_stock)
 
         # Assert

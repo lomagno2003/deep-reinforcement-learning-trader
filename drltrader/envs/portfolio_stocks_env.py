@@ -1,6 +1,7 @@
 import gym
 import numpy as np
 from gym import spaces
+import matplotlib.pyplot as plt
 
 
 class PortfolioStocksEnv(gym.Env):
@@ -91,8 +92,26 @@ class PortfolioStocksEnv(gym.Env):
         pass
 
     def render_all(self):
-        # TODO: Stub-method
-        pass
+        for symbol in self._prices_per_symbol:
+            plt.plot(self._prices_per_symbol[symbol])
+
+        allocated = []
+        allocated_prices = []
+
+        deallocated = []
+        deallocated_prices = []
+        for allocation_details in self._allocations_history:
+            deallocated.append(allocation_details['allocation_tick'])
+            deallocated_prices.append(allocation_details['source_symbol_price'])
+            allocated.append(allocation_details['allocation_tick'])
+            allocated_prices.append(allocation_details['target_symbol_price'])
+
+        plt.plot(allocated, allocated_prices, 'ro')
+        plt.plot(deallocated, deallocated_prices, 'go')
+
+        plt.suptitle(
+            "Total Profit: %.6f" % self.current_profit()
+        )
 
     def close(self):
         # TODO: Stub-method
@@ -116,7 +135,7 @@ class PortfolioStocksEnv(gym.Env):
 
         for symbol in self._dataframe_per_symbol:
             symbol_dataframe = self._dataframe_per_symbol[symbol]
-            prices_per_symbol[symbol] = symbol_dataframe[self._prices_feature_name]
+            prices_per_symbol[symbol] = symbol_dataframe[self._prices_feature_name].to_numpy()
             signal_features_per_symbol[symbol] = symbol_dataframe.loc[:, self._signal_feature_names].to_numpy()[start:end]
 
         return prices_per_symbol, signal_features_per_symbol
