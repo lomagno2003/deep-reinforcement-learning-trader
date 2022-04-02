@@ -15,8 +15,8 @@ class SingleStocksEnv(StocksEnv):
 
         super().__init__(df, window_size, frame_bound)
 
-        self.trade_fee_bid_percent = 0.01  # unit
-        self.trade_fee_ask_percent = 0.005  # unit
+        self.trade_fee_bid_percent = 0.001  # unit
+        self.trade_fee_ask_percent = 0.001  # unit
 
     def _process_data(self):
         # FIXME: Probably there's a better way to do this

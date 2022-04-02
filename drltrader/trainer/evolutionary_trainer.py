@@ -52,7 +52,9 @@ class EvolutionaryTrainer:
     FIRST_LAYER_SIZE_GENE_IDX = 0
     SECOND_LAYER_SIZE_GENE_IDX = 1
     WINDOW_SIZE_GENE_IDX = 2
-    FIRST_INDICATOR_GENE_IDX = 3
+    USE_NORMALIZED_OBS_GENE_IDX = 3
+    FIRST_INDICATOR_GENE_IDX = 4
+    INDICATOR_GENE_ACTIVATION_THRESHOLD = 0.8
 
     INSTANCE = None
 
@@ -82,7 +84,7 @@ class EvolutionaryTrainer:
         return EvolutionaryTrainer._get_brain_configuration_from_dna(self, self.genetic_algorithm.best_solutions[0])
 
     def _initialize_genetic_algorithm(self):
-        genes = len(self.data_provider.indicator_column_names) + 3
+        genes = len(self.data_provider.indicator_column_names) + EvolutionaryTrainer.FIRST_INDICATOR_GENE_IDX
         self.genetic_algorithm = pygad.GA(num_generations=self.training_configuration.generations,
                                           num_genes=genes,
                                           init_range_low=0.0,
@@ -190,16 +192,20 @@ class EvolutionaryTrainer:
                                                                  EvolutionaryTrainer.SECOND_LAYER_SIZE_GENE_IDX,
                                                                  dna)
 
+        use_normalized_observations = True if dna[EvolutionaryTrainer.USE_NORMALIZED_OBS_GENE_IDX] > 0.5 else False
+
         signal_feature_names = []
 
         for indicator_idx in range(0, len(trainer.data_provider.indicator_column_names)):
-            if dna[EvolutionaryTrainer.FIRST_INDICATOR_GENE_IDX + indicator_idx] > 0.5:
+            if dna[EvolutionaryTrainer.FIRST_INDICATOR_GENE_IDX + indicator_idx] > \
+                    EvolutionaryTrainer.INDICATOR_GENE_ACTIVATION_THRESHOLD:
                 signal_feature_names.append(trainer.data_provider.indicator_column_names[indicator_idx])
 
         return BrainConfiguration(first_layer_size=first_layer_size,
                                   second_layer_size=second_layer_size,
                                   window_size=window_size,
-                                  signal_feature_names=signal_feature_names)
+                                  signal_feature_names=signal_feature_names,
+                                  use_normalized_observations=use_normalized_observations)
 
     @staticmethod
     def _calculate_value(min, max, gene_idx, dna):

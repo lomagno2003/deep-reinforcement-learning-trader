@@ -1,21 +1,28 @@
 import unittest
 from datetime import datetime
 from datetime import timedelta
+
+from drltrader.data.scenario import Scenario
 from drltrader.envs.stock_environment import SingleStocksEnv
 from drltrader.data.data_provider import DataProvider
 
 
 class StockEnvironmentTestCase(unittest.TestCase):
     def test_init(self):
-        symbol_dataframe = DataProvider().retrieve_data(symbol='TSLA',
-                                                        start_date=datetime.now(),
-                                                        end_date=datetime.now() - timedelta(days=90),
-                                                        interval='1d')
+        # Arrange
+        testing_scenario = Scenario(symbol='TSLA',
+                                    start_date=datetime.now() - timedelta(days=30),
+                                    end_date=datetime.now())
+        symbol_dataframe = DataProvider().retrieve_data(testing_scenario)
 
+        # Act
         environment = SingleStocksEnv(df=symbol_dataframe,
                                       window_size=12,
-                                      frame_bound=(12, len(symbol_dataframe.index) - 1))
+                                      frame_bound=(12, len(symbol_dataframe.index) - 1),
+                                      prices_feature_name='Close',
+                                      signal_features_names=['RSI_6'])
 
+        # Assert
         self.assertIsNotNone(environment)
 
 

@@ -9,12 +9,15 @@ from drltrader.data.scenario import Scenario
 class BrainTestCase(unittest.TestCase):
     def __init__(self, name):
         super(BrainTestCase, self).__init__(name)
+
+        start_day = 18
+        end_day = start_day + 1
         self.training_scenario = Scenario(symbol='TSLA',
-                                          start_date=datetime.now() - timedelta(days=30),
-                                          end_date=datetime.now())
+                                          start_date=datetime(year=2022, month=3, day=start_day),
+                                          end_date=datetime(year=2022, month=3, day=end_day))
         self.testing_scenario = Scenario(symbol='TSLA',
-                                         start_date=datetime.now() - timedelta(days=1),
-                                         end_date=datetime.now())
+                                         start_date=datetime(year=2022, month=3, day=start_day),
+                                         end_date=datetime(year=2022, month=3, day=end_day))
 
     def test_learn(self):
         brain: Brain = Brain()
@@ -26,7 +29,8 @@ class BrainTestCase(unittest.TestCase):
         brain: Brain = Brain()
 
         brain.learn(training_scenario=self.training_scenario,
-                    testing_scenario=self.testing_scenario)
+                    testing_scenario=self.testing_scenario,
+                    total_timesteps=20000)
 
         results = brain.test(testing_scenario=self.testing_scenario)
 

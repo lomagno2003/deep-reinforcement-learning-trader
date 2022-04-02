@@ -33,13 +33,15 @@ class BrainConfiguration:
     def __init__(self,
                  first_layer_size: int = 256,
                  second_layer_size: int = 256,
-                 window_size: int = 12,
+                 window_size: int = 3,
                  prices_feature_name: str = 'Low',
-                 signal_feature_names: list = ['Low', 'Volume']):
+                 signal_feature_names: list = ['Low', 'Volume'],
+                 use_normalized_observations: bool = True):
         self.first_layer_size = first_layer_size
         self.second_layer_size = second_layer_size
         self.window_size = window_size
         self.prices_feature_name = prices_feature_name
+        self.use_normalized_observations = use_normalized_observations
         self.signal_feature_names = signal_feature_names
 
     def __str__(self):
@@ -96,7 +98,12 @@ class Brain:
         obs = testing_environment.reset()
 
         # FIXME: This needs to be done because the VecEnvs auto-calls the reset on done==true
-        testing_environment.venv.envs[0].disable_reset()
+        if self._brain_configuration.use_normalized_observations:
+            internal_environment = testing_environment.venv.envs[0]
+        else:
+            internal_environment = testing_environment.envs[0]
+
+        internal_environment.disable_reset()
 
         while True:
             obs = obs[np.newaxis, ...]
@@ -108,7 +115,7 @@ class Brain:
         if render:
             plt.figure(figsize=(15, 6))
             plt.cla()
-            testing_environment.venv.envs[0].render_all()
+            internal_environment.render_all()
             plt.show()
 
         return info[0]
@@ -121,5 +128,7 @@ class Brain:
                               prices_feature_name=self._brain_configuration.prices_feature_name,
                               signal_features_names=self._brain_configuration.signal_feature_names,
                               reset_enabled=reset_enabled)
-
-        return VecNormalize(DummyVecEnv([lambda: env]))
+        if self._brain_configuration.use_normalized_observations:
+            return VecNormalize(DummyVecEnv([lambda: env]))
+        else:
+            return DummyVecEnv([lambda: env])
