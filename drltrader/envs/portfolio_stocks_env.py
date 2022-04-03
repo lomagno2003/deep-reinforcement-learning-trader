@@ -106,8 +106,8 @@ class PortfolioStocksEnv(gym.Env):
             allocated.append(allocation_details['allocation_tick'])
             allocated_prices.append(allocation_details['target_symbol_price'])
 
-        plt.plot(allocated, allocated_prices, 'ro')
-        plt.plot(deallocated, deallocated_prices, 'go')
+        plt.plot(allocated, allocated_prices, 'go')
+        plt.plot(deallocated, deallocated_prices, 'ro')
 
         plt.suptitle(
             "Total Profit: %.6f" % self.current_profit()

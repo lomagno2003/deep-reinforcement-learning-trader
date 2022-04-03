@@ -88,14 +88,6 @@ class Brain:
 
         self._model.learn(total_timesteps=total_timesteps, callback=eval_callback)
 
-    def _init_model(self, env):
-        policy_kwargs = dict(act_fun=tf.nn.tanh,
-                             net_arch=['lstm',
-                                       self._brain_configuration.first_layer_size,
-                                       self._brain_configuration.second_layer_size])
-
-        self._model = A2C('MlpLstmPolicy', env, verbose=0, policy_kwargs=policy_kwargs)
-
     def test(self,
              testing_scenario: Scenario,
              render=True):
@@ -125,6 +117,14 @@ class Brain:
             plt.show()
 
         return info[0]
+
+    def _init_model(self, env):
+        policy_kwargs = dict(act_fun=tf.nn.tanh,
+                             net_arch=['lstm',
+                                       self._brain_configuration.first_layer_size,
+                                       self._brain_configuration.second_layer_size])
+
+        self._model = A2C('MlpLstmPolicy', env, verbose=0, policy_kwargs=policy_kwargs)
 
     def _build_environment(self, scenario: Scenario):
         env = None

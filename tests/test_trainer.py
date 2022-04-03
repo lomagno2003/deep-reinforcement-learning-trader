@@ -15,7 +15,7 @@ class EvolutionaryTrainerTestCase(unittest.TestCase):
     def __init__(self, methodName):
         super().__init__(methodName=methodName)
 
-    def test_short_train(self):
+    def test_short_train_single_stock(self):
         # Arrange
         data_provider: DataProvider = DataProvider()
         trainer: EvolutionaryTrainer = EvolutionaryTrainer(data_provider=data_provider)
@@ -36,7 +36,7 @@ class EvolutionaryTrainerTestCase(unittest.TestCase):
         self.assertIsNotNone(best_brain_configuration)
         print(best_brain_configuration)
 
-    def test_big_train(self):
+    def test_big_train_single_stock(self):
         # Arrange
         data_provider: DataProvider = DataProvider()
         trainer: EvolutionaryTrainer = EvolutionaryTrainer(data_provider=data_provider)
@@ -55,6 +55,60 @@ class EvolutionaryTrainerTestCase(unittest.TestCase):
                                       start_date=datetime.now() - timedelta(days=2),
                                       end_date=datetime.now())
                              ]
+        training_configuration = TrainingConfiguration(training_scenarios=training_scenarios,
+                                                       testing_scenarios=testing_scenarios,
+                                                       generations=100,
+                                                       start_population=20,
+                                                       stop_population=5,
+                                                       step_population=-1,
+                                                       start_timesteps=1000,
+                                                       stop_timesteps=20000,
+                                                       step_timesteps=500,
+                                                       solutions_statistics_filename='logs/solutions.csv')
+
+        # Act
+        best_brain_configuration: BrainConfiguration = trainer.train(training_configuration)
+
+        # Assert
+        self.assertIsNotNone(best_brain_configuration)
+        print(best_brain_configuration)
+
+    def test_short_train_multi_stock(self):
+        # Arrange
+        data_provider: DataProvider = DataProvider()
+        trainer: EvolutionaryTrainer = EvolutionaryTrainer(data_provider=data_provider)
+
+        symbols = ['TSLA', 'AAPL', 'MSFT', 'SPY', 'SHOP']
+        training_scenarios = [Scenario(symbols=symbols,
+                                       interval='1d',
+                                       start_date=datetime.now() - timedelta(days=360),
+                                       end_date=datetime.now())]
+        testing_scenarios = training_scenarios
+        training_configuration = TrainingConfiguration(training_scenarios=training_scenarios,
+                                                       testing_scenarios=testing_scenarios)
+
+        # Act
+        best_brain_configuration: BrainConfiguration = trainer.train(training_configuration)
+
+        # Assert
+        self.assertIsNotNone(best_brain_configuration)
+        print(best_brain_configuration)
+
+    def test_big_train_multi_stock(self):
+        # Arrange
+        data_provider: DataProvider = DataProvider()
+        trainer: EvolutionaryTrainer = EvolutionaryTrainer(data_provider=data_provider)
+
+        symbols = ['TSLA', 'AAPL', 'MSFT', 'SPY', 'SHOP']
+        training_scenarios = [Scenario(symbols=symbols,
+                                       interval='1d',
+                                       start_date=datetime.now() - timedelta(days=720),
+                                       end_date=datetime.now() - timedelta(days=90))]
+
+        testing_scenarios = [Scenario(symbols=symbols,
+                                      interval='1d',
+                                      start_date=datetime.now() - timedelta(days=90),
+                                      end_date=datetime.now())]
         training_configuration = TrainingConfiguration(training_scenarios=training_scenarios,
                                                        testing_scenarios=testing_scenarios,
                                                        generations=100,

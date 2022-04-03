@@ -12,6 +12,7 @@ logging.basicConfig(format='%(asctime)s %(message)s',
                     level=logging.DEBUG)
 
 
+# FIXME: parents_per_generation can be set using 50% of the population per generation
 class TrainingConfiguration:
     def __init__(self,
                  training_scenarios: list,
@@ -155,7 +156,8 @@ class EvolutionaryTrainer:
             mean_testing_profit = 0.0
             for testing_scenario in trainer.training_configuration.testing_scenarios:
                 logging.info(f"Testing on scenario {testing_scenario}")
-                profit = brain.test(testing_scenario=testing_scenario)['total_profit']
+                info = brain.test(testing_scenario=testing_scenario)
+                profit = info['total_profit'] if 'total_profit' in info else info['current_profit']
                 logging.info(f"Testing finished with profit {profit}")
                 mean_testing_profit += profit
 

@@ -38,6 +38,9 @@ class DataProvider:
             if self._cache_enabled:
                 self._cache[str(scenario)] = df
 
+            # FIXME: There's some weird bug on Yahoo
+            df = df.iloc[:-1, :]
+
             return df
 
     def _define_indicators(self):
