@@ -4,7 +4,7 @@ from datetime import datetime
 class Scenario:
     def __init__(self,
                  start_date: datetime,
-                 end_date: datetime,
+                 end_date: datetime = None,
                  interval: str = '5m',
                  symbol: str = None,
                  symbols: list = None):
@@ -35,3 +35,10 @@ class Scenario:
                         end_date=self.end_date,
                         interval=self.interval,
                         symbol=symbol)
+
+    def copy_with_end_date(self, end_date: datetime):
+        return Scenario(start_date=self.start_date,
+                        end_date=end_date,
+                        interval=self.interval,
+                        symbol=self.symbol,
+                        symbols=self.symbols)

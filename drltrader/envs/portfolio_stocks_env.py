@@ -4,6 +4,7 @@ import pandas as pd
 from gym import spaces
 import matplotlib.pyplot as plt
 
+from drltrader.envs.env_observer import EnvObserver
 
 class PortfolioStocksEnv(gym.Env):
     ALLOCATION_PENALTY = 0.002
@@ -15,16 +16,17 @@ class PortfolioStocksEnv(gym.Env):
                  dataframe_per_symbol: dict,
                  initial_portfolio_allocation: dict,
                  prices_feature_name: str = 'Close',
-                 signal_feature_names: list = ['RSI_4', 'RSI_16']):
+                 signal_feature_names: list = ['RSI_4', 'RSI_16'],
+                 env_observer: EnvObserver = None):
         super(PortfolioStocksEnv, self).__init__()
 
         # Save Configurations
         self._window_size = window_size
         self._initial_portfolio_allocation = initial_portfolio_allocation
-
         self._dataframe_per_symbol = dataframe_per_symbol
         self._prices_feature_name = prices_feature_name
         self._signal_feature_names = signal_feature_names
+        self._env_observer = env_observer
 
         # Initialize Custom Configurations
         self._reset_enabled = True
@@ -64,7 +66,6 @@ class PortfolioStocksEnv(gym.Env):
             return None, 0.0, self._done, self._get_info()
 
         self._current_tick += 1
-        self._done = self._current_tick == self._frame_bound[1]
 
         # Process Action
         selected_symbol = self._action_to_symbol[action]
@@ -74,6 +75,11 @@ class PortfolioStocksEnv(gym.Env):
             self._transfer_allocations(allocated_symbol, selected_symbol, self._current_tick)
 
         # Calculate Gym Responses
+        return self.get_step_outputs()
+
+    def get_step_outputs(self):
+        self._done = self._current_tick == self._frame_bound[1]
+
         if self._done:
             observation = None
             reward = 0.0
@@ -181,6 +187,11 @@ class PortfolioStocksEnv(gym.Env):
         # Reallocation
         target_symbol_new_shares = deallocated_funds / target_symbol_price
         self._portfolio_allocation[target_symbol] = target_symbol_original_shares + target_symbol_new_shares
+
+        # Notify Observer
+        if self._env_observer is not None:
+            self._env_observer.notify_stock_buy(target_symbol)
+            self._env_observer.notify_stock_sell(source_symbol)
 
         # Statistics
         allocation_details = {

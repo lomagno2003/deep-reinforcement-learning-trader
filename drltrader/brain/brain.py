@@ -1,5 +1,7 @@
 import numpy as np
 import json
+import logging
+import time
 
 import tensorflow as tf
 from stable_baselines.common.vec_env import DummyVecEnv, VecNormalize
@@ -12,6 +14,12 @@ from drltrader.data.data_provider import DataProvider
 from drltrader.data.scenario import Scenario
 from drltrader.envs.single_stock_env import SingleStockEnv
 from drltrader.envs.portfolio_stocks_env import PortfolioStocksEnv
+from drltrader.envs.env_observer import EnvObserver
+
+logging.basicConfig(format='%(asctime)s %(message)s',
+                    filename='logs/training.log',
+                    encoding='utf-8',
+                    level=logging.DEBUG)
 
 
 # FIXME: This callback doesn't work with PorfolioStocksEnv
@@ -53,12 +61,15 @@ class BrainConfiguration:
 class Brain:
     def __init__(self,
                  data_provider: DataProvider = DataProvider(),
-                 brain_configuration: BrainConfiguration = BrainConfiguration()):
+                 brain_configuration: BrainConfiguration = BrainConfiguration(),
+                 env_observer: EnvObserver = None):
         # Store Configurations
         self._data_provider = data_provider
         self._brain_configuration = brain_configuration
+        self._env_observer = env_observer
 
         # Initialize Runtime Variables
+        self._live = False
         self._model = None
         self._using_multi_symbol_scenarios = None
 
@@ -88,25 +99,31 @@ class Brain:
 
         self._model.learn(total_timesteps=total_timesteps, callback=eval_callback)
 
-    def test(self,
-             testing_scenario: Scenario,
-             render=True):
-        testing_environment = self._build_environment(scenario=testing_scenario)
+    def evaluate(self,
+                 testing_scenario: Scenario,
+                 render=True):
+        _, _, info = self._analyze_scenario(testing_scenario, render=render)
+        return info
 
-        obs = testing_environment.reset()
+    def _analyze_scenario(self,
+                          scenario: Scenario,
+                          render=True):
+        environment = self._build_environment(scenario=scenario)
+
+        obs = environment.reset()
 
         # FIXME: This needs to be done because the VecEnvs auto-calls the reset on done==true
         if self._brain_configuration.use_normalized_observations:
-            internal_environment = testing_environment.venv.envs[0]
+            internal_environment = environment.venv.envs[0]
         else:
-            internal_environment = testing_environment.envs[0]
+            internal_environment = environment.envs[0]
 
         internal_environment.disable_reset()
 
         while True:
             obs = obs[np.newaxis, ...]
             action, _states = self._model.predict(obs[0])
-            obs, rewards, done, info = testing_environment.step(action)
+            obs, rewards, done, info = environment.step(action)
             if done[0]:
                 break
 
@@ -116,7 +133,38 @@ class Brain:
             internal_environment.render_all()
             plt.show()
 
-        return info[0]
+        return internal_environment, environment, info[0]
+
+    def evaluate_live(self, scenario: Scenario):
+        # TODO: This is done only for PortfolioStocksEnv
+        # TODO: Validate that scenario is without end_date
+        internal_environment, environment, info = self._analyze_scenario(scenario, render=False)
+
+        self._live = True
+        while self._live:
+            logging.info("Running cycle...")
+            new_dataframe_per_symbol = self._data_provider.retrieve_datas(scenario)
+            internal_environment.append_data(dataframe_per_symbol=new_dataframe_per_symbol)
+
+            obs, rewards, done, info = internal_environment.get_step_outputs()
+
+            while not done:
+                obs = obs[np.newaxis, ...]
+                action, _states = self._model.predict(obs)
+                obs_arr, rewards_arr, done_arr, info_arr = environment.step(action)
+
+                obs = obs_arr[0]
+                rewards = rewards_arr[0]
+                done = done_arr[0]
+                info = info_arr[0]
+
+                if done:
+                    break
+
+            logging.info("Cycle finished, sleeping")
+            time.sleep(10)
+
+        return info
 
     def _init_model(self, env):
         policy_kwargs = dict(act_fun=tf.nn.tanh,
@@ -139,6 +187,7 @@ class Brain:
             return DummyVecEnv([lambda: env])
 
     def _build_single_stock_scenario(self, scenario: Scenario):
+        # TODO: env_observer is not forwarded to SingleStockEnv
         symbol_dataframe = self._data_provider.retrieve_data(scenario)
         env = SingleStockEnv(df=symbol_dataframe,
                              window_size=self._brain_configuration.window_size,
@@ -150,12 +199,14 @@ class Brain:
 
     def _build_portfolio_stock_scenario(self, scenario: Scenario):
         dataframe_per_symbol = self._data_provider.retrieve_datas(scenario)
+        first_symbol = list(dataframe_per_symbol.keys())[0]
         initial_portfolio_allocation = {first_symbol: 1.0} # FIXME: This is not configurable
 
         env = PortfolioStocksEnv(initial_portfolio_allocation=initial_portfolio_allocation,
                                  dataframe_per_symbol=dataframe_per_symbol,
                                  window_size=self._brain_configuration.window_size,
                                  prices_feature_name=self._brain_configuration.prices_feature_name,
-                                 signal_feature_names=self._brain_configuration.signal_feature_names)
+                                 signal_feature_names=self._brain_configuration.signal_feature_names,
+                                 env_observer=self._env_observer)
 
         return env

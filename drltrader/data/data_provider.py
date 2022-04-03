@@ -1,5 +1,6 @@
 import yfinance as yf
 import pandas as pd
+from datetime import datetime
 import logging
 from finta import TA
 
@@ -27,6 +28,9 @@ class DataProvider:
         return dataframe_per_symbol
 
     def retrieve_data(self, scenario: Scenario):
+        if scenario.end_date is None:
+            scenario = scenario.copy_with_end_date(datetime.now())
+
         if self._cache_enabled and str(scenario) in self._cache:
             logging.info(f"Data for scenario {scenario} available on cache. Returning saved version...")
             return self._cache[str(scenario)]

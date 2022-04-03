@@ -156,7 +156,7 @@ class EvolutionaryTrainer:
             mean_testing_profit = 0.0
             for testing_scenario in trainer.training_configuration.testing_scenarios:
                 logging.info(f"Testing on scenario {testing_scenario}")
-                info = brain.test(testing_scenario=testing_scenario)
+                info = brain.evaluate(testing_scenario=testing_scenario)
                 profit = info['total_profit'] if 'total_profit' in info else info['current_profit']
                 logging.info(f"Testing finished with profit {profit}")
                 mean_testing_profit += profit
