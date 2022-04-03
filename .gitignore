@@ -4,3 +4,6 @@ venv/
 tests/logs/*
 tests/config.json
 tests/temp/*
+*__pycache__*
+logs/*
+config.json
