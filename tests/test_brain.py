@@ -85,6 +85,22 @@ class BrainTestCase(unittest.TestCase):
         # Assert
         self.assertTrue(self._processed)
 
+    def test_save_and_load(self):
+        # Arrange
+        brain: Brain = Brain()
+        brain.learn(training_scenario=self.training_scenario_multi_stock)
+
+        brain_path = "temp/test_save_and_load"
+
+        # Act
+        brain.save(brain_path, override=True)
+        del brain
+        brain = Brain.load(brain_path)
+
+        # Assert
+        self.assertIsNotNone(brain)
+        brain.learn(training_scenario=self.training_scenario_multi_stock)
+
 
 if __name__ == '__main__':
     unittest.main()

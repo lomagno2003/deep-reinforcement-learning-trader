@@ -2,6 +2,10 @@ import numpy as np
 import json
 import logging
 import time
+import os
+from pathlib import Path
+import pickle
+import shutil
 
 import tensorflow as tf
 from stable_baselines.common.vec_env import DummyVecEnv, VecNormalize
@@ -103,36 +107,6 @@ class Brain:
         _, _, info = self._analyze_scenario(testing_scenario, render=render)
         return info
 
-    def _analyze_scenario(self,
-                          scenario: Scenario,
-                          render=True):
-        environment = self._build_environment(scenario=scenario)
-
-        obs = environment.reset()
-
-        # FIXME: This needs to be done because the VecEnvs auto-calls the reset on done==true
-        if self._brain_configuration.use_normalized_observations:
-            internal_environment = environment.venv.envs[0]
-        else:
-            internal_environment = environment.envs[0]
-
-        internal_environment.disable_reset()
-
-        while True:
-            obs = obs[np.newaxis, ...]
-            action, _states = self._model.predict(obs[0])
-            obs, rewards, done, info = environment.step(action)
-            if done[0]:
-                break
-
-        if render:
-            plt.figure(figsize=(15, 6))
-            plt.cla()
-            internal_environment.render_all()
-            plt.show()
-
-        return internal_environment, environment, info[0]
-
     def start_observing(self, scenario: Scenario, observer: Observer = None):
         # TODO: This is done only for PortfolioStocksEnv
         # TODO: Validate that scenario is without end_date
@@ -168,6 +142,37 @@ class Brain:
     def stop_observing(self):
         self._observing = False
 
+    def save(self, path: str, override: bool = False):
+        # Check and create directory
+        directory_exists = (Path.cwd() / path).exists()
+        if directory_exists:
+            if not override:
+                raise FileExistsError(f"There's already another file/folder with name {path}")
+            else:
+                shutil.rmtree(path)
+
+        os.mkdir(path)
+
+        # Save brain
+        model_path = f"{path}/model"
+        brain_configuration_path = f"{path}/brain_configuration.json"
+
+        with open(brain_configuration_path, 'wb') as brain_configuration_file:
+            self._model.save(model_path)
+            pickle.dump(self._brain_configuration.__dict__, brain_configuration_file)
+
+    @staticmethod
+    def load(path: str):
+        model_path = f"{path}/model"
+        brain_configuration_path = f"{path}/brain_configuration.json"
+
+        with open(brain_configuration_path, 'rb') as brain_configuration_file:
+            brain_configuration: BrainConfiguration = BrainConfiguration(**pickle.load(brain_configuration_file))
+            new_brain = Brain(brain_configuration=brain_configuration)
+            new_brain._model = A2C.load(model_path)
+
+            return new_brain
+
     def _init_model(self, env):
         policy_kwargs = dict(act_fun=tf.nn.tanh,
                              net_arch=['lstm',
@@ -175,6 +180,36 @@ class Brain:
                                        self._brain_configuration.second_layer_size])
 
         self._model = A2C('MlpLstmPolicy', env, verbose=0, policy_kwargs=policy_kwargs)
+
+    def _analyze_scenario(self,
+                          scenario: Scenario,
+                          render=True):
+        environment = self._build_environment(scenario=scenario)
+
+        obs = environment.reset()
+
+        # FIXME: This needs to be done because the VecEnvs auto-calls the reset on done==true
+        if self._brain_configuration.use_normalized_observations:
+            internal_environment = environment.venv.envs[0]
+        else:
+            internal_environment = environment.envs[0]
+
+        internal_environment.disable_reset()
+
+        while True:
+            obs = obs[np.newaxis, ...]
+            action, _states = self._model.predict(obs[0])
+            obs, rewards, done, info = environment.step(action)
+            if done[0]:
+                break
+
+        if render:
+            plt.figure(figsize=(15, 6))
+            plt.cla()
+            internal_environment.render_all()
+            plt.show()
+
+        return internal_environment, environment, info[0]
 
     def _build_environment(self, scenario: Scenario):
         env = None
