@@ -7,3 +7,4 @@ finta
 pandas
 pygad
 python-telegram-bot
+alpaca-trade-api

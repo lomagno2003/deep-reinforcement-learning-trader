@@ -4,7 +4,8 @@ import pandas as pd
 from gym import spaces
 import matplotlib.pyplot as plt
 
-from drltrader.envs.env_observer import EnvObserver
+from drltrader.envs.observers import EnvObserver
+
 
 class PortfolioStocksEnv(gym.Env):
     ALLOCATION_PENALTY = 0.002
@@ -190,8 +191,8 @@ class PortfolioStocksEnv(gym.Env):
 
         # Notify Observer
         if self._env_observer is not None:
-            self._env_observer.notify_stock_buy(target_symbol)
-            self._env_observer.notify_stock_sell(source_symbol)
+            self._env_observer.notify_stock_buy(target_symbol, target_symbol_new_shares, target_symbol_price)
+            self._env_observer.notify_stock_sell(source_symbol, source_symbol_shares, source_symbol_price)
 
         # Statistics
         allocation_details = {

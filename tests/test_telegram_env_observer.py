@@ -1,6 +1,6 @@
 import unittest
 
-from drltrader.envs.env_observer import TelegramEnvObserver
+from drltrader.envs.observers.telegram_env_observer import TelegramEnvObserver
 
 
 class TelegramEnvObserverTestCase(unittest.TestCase):
@@ -9,7 +9,7 @@ class TelegramEnvObserverTestCase(unittest.TestCase):
         telegram_env_observer: TelegramEnvObserver = TelegramEnvObserver()
 
         # Act/Assert
-        telegram_env_observer.notify_stock_sell('TSLA')
+        telegram_env_observer.notify_stock_sell('TSLA', 1.0, 1.0)
 
         # Assert
         # FIXME: In here you'll need to check the group to ensure it was sent

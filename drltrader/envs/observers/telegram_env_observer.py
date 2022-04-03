@@ -2,21 +2,7 @@ from telegram import *
 from telegram.ext import *
 import json
 
-
-class EnvObserver:
-    def notify_stock_buy(self, symbol):
-        pass
-
-    def notify_stock_sell(self, symbol):
-        pass
-
-
-class PrintEnvObserver(EnvObserver):
-    def notify_stock_buy(self, symbol):
-        print(f"The stock {symbol} was bought")
-
-    def notify_stock_sell(self, symbol):
-        print(f"The stock {symbol} was sold")
+from drltrader.envs.observers import EnvObserver
 
 
 class TelegramEnvObserver(EnvObserver):
@@ -29,11 +15,13 @@ class TelegramEnvObserver(EnvObserver):
         self._char_group_id = config['telegram']['chat_id']
         self._updater = Updater(token=self._telegram_token)
 
-    def notify_stock_buy(self, symbol):
-        self._updater.bot.send_message(chat_id=self._char_group_id, text=f"{symbol} was bought!")
+    def notify_stock_buy(self, symbol, qty, price):
+        self._updater.bot.send_message(chat_id=self._char_group_id,
+                                       text=f"{symbol} was bought at {price}!")
 
-    def notify_stock_sell(self, symbol):
-        self._updater.bot.send_message(chat_id=self._char_group_id, text=f"{symbol} was sold!")
+    def notify_stock_sell(self, symbol, qty, price):
+        self._updater.bot.send_message(chat_id=self._char_group_id,
+                                       text=f"{symbol} was sold at {price}!")
 
     def start_polling(self):
         dispatcher = self._updater.dispatcher

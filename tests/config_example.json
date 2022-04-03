@@ -2,5 +2,10 @@
   "telegram": {
     "token": "EXAMPLE_TOKEN",
     "chat_id": "EXAMPE_GROUP_ID"
+  },
+  "alpaca": {
+    "key": "EXAMPLE_KEY",
+    "secret": "EXAMPLE_SECRET",
+    "url": "https://paper-api.alpaca.markets"
   }
 }

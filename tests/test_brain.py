@@ -4,7 +4,8 @@ from datetime import timedelta
 
 from drltrader.brain.brain import Brain
 from drltrader.data.scenario import Scenario
-from drltrader.envs.env_observer import PrintEnvObserver
+from drltrader.envs.observers.simple_env_observer import PrintEnvObserver
+
 
 class BrainTestCase(unittest.TestCase):
     def __init__(self, name):
