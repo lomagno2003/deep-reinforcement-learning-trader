@@ -1,5 +1,6 @@
 import gym
 import numpy as np
+import pandas as pd
 from gym import spaces
 import matplotlib.pyplot as plt
 
@@ -11,7 +12,6 @@ class PortfolioStocksEnv(gym.Env):
 
     def __init__(self,
                  window_size: int,
-                 frame_bound,
                  dataframe_per_symbol: dict,
                  initial_portfolio_allocation: dict,
                  prices_feature_name: str = 'Close',
@@ -20,15 +20,15 @@ class PortfolioStocksEnv(gym.Env):
 
         # Save Configurations
         self._window_size = window_size
-        self._frame_bound = frame_bound
-        self._dataframe_per_symbol = dataframe_per_symbol
         self._initial_portfolio_allocation = initial_portfolio_allocation
+
+        self._dataframe_per_symbol = dataframe_per_symbol
         self._prices_feature_name = prices_feature_name
         self._signal_feature_names = signal_feature_names
 
         # Initialize Custom Configurations
         self._reset_enabled = True
-        self._prices_per_symbol, self._signal_features_per_symbol = self._initialize_prices_and_features()
+        self._process_dataframe_per_symbol()
         self._action_to_symbol = {}
         for symbol in dataframe_per_symbol:
             self._action_to_symbol[len(self._action_to_symbol)] = symbol
@@ -46,29 +46,45 @@ class PortfolioStocksEnv(gym.Env):
 
         self.reset()
 
-    def step(self, action):
-        self._done = False
-        self._current_tick += 1
+    def append_data(self, dataframe_per_symbol: dict):
+        new_dataframe_per_symbol = {}
 
+        for symbol in dataframe_per_symbol:
+            old_data_for_symbol = self._dataframe_per_symbol[symbol]
+            new_data_for_symbol = dataframe_per_symbol[symbol].loc[self._timestamps[-1]:, ].iloc[1:, :]
+            new_dataframe_per_symbol[symbol] = pd.concat([old_data_for_symbol, new_data_for_symbol])
+
+        self._dataframe_per_symbol = new_dataframe_per_symbol
+        self._process_dataframe_per_symbol()
+
+        self._done = self._current_tick >= self._frame_bound[1]
+
+    def step(self, action):
+        if self._done:
+            return None, 0.0, self._done, self._get_info()
+
+        self._current_tick += 1
+        self._done = self._current_tick == self._frame_bound[1]
+
+        # Process Action
         selected_symbol = self._action_to_symbol[action]
         allocated_symbol = self._get_allocated_symbol()
 
         if selected_symbol != allocated_symbol:
             self._transfer_allocations(allocated_symbol, selected_symbol, self._current_tick)
 
-        observation = self._get_observation(self._current_tick)
-        reward = self.current_profit()
-        done = self._current_tick == self._frame_bound[1]
-        info = {
-            'current_profit': self.current_profit(),
-            'current_portfolio_value': self.current_portfolio_value(),
-            'portfolio_allocation': self._portfolio_allocation,
-            'allocations_history': self._allocations_history
-        }
+        # Calculate Gym Responses
+        if self._done:
+            observation = None
+            reward = 0.0
+        else:
+            observation = self._get_observation(self._current_tick)
+            reward = self.current_profit()
 
-        return observation, reward, done, info
+        return observation, reward, self._done, self._get_info()
 
     def reset(self):
+        self._done = False
         if not self._reset_enabled:
             return
 
@@ -126,7 +142,12 @@ class PortfolioStocksEnv(gym.Env):
     def current_profit(self):
         return self.current_portfolio_value() / self.initial_portfolio_value()
 
-    def _initialize_prices_and_features(self):
+    def _process_dataframe_per_symbol(self):
+        timestamps = self._dataframe_per_symbol[list(self._dataframe_per_symbol.keys())[0]].index.tolist()
+
+        first_symbol = list(self._dataframe_per_symbol.keys())[0]
+        self._frame_bound = (self._window_size, len(self._dataframe_per_symbol[first_symbol].index) - 1)
+
         start = self._frame_bound[0] - self._window_size
         end = self._frame_bound[1]
 
@@ -138,7 +159,9 @@ class PortfolioStocksEnv(gym.Env):
             prices_per_symbol[symbol] = symbol_dataframe[self._prices_feature_name].to_numpy()
             signal_features_per_symbol[symbol] = symbol_dataframe.loc[:, self._signal_feature_names].to_numpy()[start:end]
 
-        return prices_per_symbol, signal_features_per_symbol
+        self._timestamps = timestamps
+        self._prices_per_symbol = prices_per_symbol
+        self._signal_features_per_symbol = signal_features_per_symbol
 
     def _transfer_allocations(self, source_symbol, target_symbol, allocation_tick):
         # Temporary Variables
@@ -184,6 +207,14 @@ class PortfolioStocksEnv(gym.Env):
             portfolio_value += symbol_shares * symbol_price
 
         return portfolio_value
+
+    def _get_info(self):
+        return {
+            'current_profit': self.current_profit(),
+            'current_portfolio_value': self.current_portfolio_value(),
+            'portfolio_allocation': self._portfolio_allocation,
+            'allocations_history': self._allocations_history
+        }
 
     def _get_observation(self, current_tick):
         result = None

@@ -150,16 +150,11 @@ class Brain:
 
     def _build_portfolio_stock_scenario(self, scenario: Scenario):
         dataframe_per_symbol = self._data_provider.retrieve_datas(scenario)
-        first_symbol = list(dataframe_per_symbol.keys())[0]
-
-        start_tick = self._brain_configuration.window_size
-        end_tick = len(dataframe_per_symbol[first_symbol].index) - 1
         initial_portfolio_allocation = {first_symbol: 1.0} # FIXME: This is not configurable
 
         env = PortfolioStocksEnv(initial_portfolio_allocation=initial_portfolio_allocation,
                                  dataframe_per_symbol=dataframe_per_symbol,
                                  window_size=self._brain_configuration.window_size,
-                                 frame_bound=(start_tick, end_tick),
                                  prices_feature_name=self._brain_configuration.prices_feature_name,
                                  signal_feature_names=self._brain_configuration.signal_feature_names)
 

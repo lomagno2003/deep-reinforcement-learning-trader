@@ -16,7 +16,6 @@ class PortfolioStocksEnvTestCase(unittest.TestCase):
 
         # Act
         environment = PortfolioStocksEnv(window_size=8,
-                                         frame_bound=(8, 100),
                                          dataframe_per_symbol=dataframe_per_symbol,
                                          initial_portfolio_allocation=initial_portfolio_allocation)
 
@@ -71,6 +70,38 @@ class PortfolioStocksEnvTestCase(unittest.TestCase):
         current_profit = environment.current_profit()
         self.assertNotEqual(1.0, current_profit)
 
+    def test_append_data(self):
+        # Arrange
+        data_provider: DataProvider = DataProvider()
+        first_scenario = Scenario(symbols=['TSLA', 'MSFT', 'AAPL'],
+                                  start_date=datetime.now() - timedelta(days=60),
+                                  end_date=datetime.now() - timedelta(days=30))
+        second_scenario = Scenario(symbols=['TSLA', 'MSFT', 'AAPL'],
+                                   start_date=datetime.now() - timedelta(days=45),
+                                   end_date=datetime.now() - timedelta(days=15))
+        first_dataframe_per_symbol = data_provider.retrieve_datas(first_scenario)
+        second_dataframe_per_symbol = data_provider.retrieve_datas(second_scenario)
+
+        initial_portfolio_allocation = {'TSLA': 1.0}
+
+        environment = PortfolioStocksEnv(window_size=8,
+                                         dataframe_per_symbol=first_dataframe_per_symbol,
+                                         initial_portfolio_allocation=initial_portfolio_allocation)
+
+        # Act
+        while True:
+            action = random.choice(list(range(0, 3)))
+            obs, rewards, done, info = environment.step(action)
+            if done:
+                break
+
+        self.assertIsNone(obs)
+        environment.append_data(second_dataframe_per_symbol)
+
+        # Assert
+        obs, rewards, done, info = environment.step(action)
+        self.assertIsNotNone(obs)
+
     def _build_testing_dataframe_per_symbol(self):
         scenario = Scenario(symbols=['TSLA', 'MSFT', 'AAPL'],
                             start_date=datetime.now() - timedelta(days=30),
@@ -85,7 +116,6 @@ class PortfolioStocksEnvTestCase(unittest.TestCase):
         initial_portfolio_allocation = {'TSLA': 1.0}
 
         environment = PortfolioStocksEnv(window_size=8,
-                                         frame_bound=(8, 100),
                                          dataframe_per_symbol=dataframe_per_symbol,
                                          initial_portfolio_allocation=initial_portfolio_allocation)
 

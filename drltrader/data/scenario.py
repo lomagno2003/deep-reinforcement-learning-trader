@@ -20,8 +20,13 @@ class Scenario:
         self.interval = interval
 
     def __str__(self):
+        if self.symbol is not None:
+            symbols_space = f"{self.symbols}"
+        else:
+            symbols_space = "_".join(self.symbols)
+
         return f"{self.interval}" \
-               f"_{self.symbol}" \
+               f"_{symbols_space}" \
                f"_{self.start_date.strftime('%Y-%m-%d-%H-%M-%S')}" \
                f"_{self.end_date.strftime('%Y-%m-%d-%H-%M-%S')}"
 
