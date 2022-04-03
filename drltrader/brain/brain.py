@@ -14,7 +14,7 @@ from drltrader.data.data_provider import DataProvider
 from drltrader.data.scenario import Scenario
 from drltrader.envs.single_stock_env import SingleStockEnv
 from drltrader.envs.portfolio_stocks_env import PortfolioStocksEnv
-from drltrader.envs.observers import EnvObserver
+from drltrader.observers import Observer
 
 logging.basicConfig(format='%(asctime)s %(message)s',
                     filename='logs/training.log',
@@ -61,15 +61,13 @@ class BrainConfiguration:
 class Brain:
     def __init__(self,
                  data_provider: DataProvider = DataProvider(),
-                 brain_configuration: BrainConfiguration = BrainConfiguration(),
-                 env_observer: EnvObserver = None):
+                 brain_configuration: BrainConfiguration = BrainConfiguration()):
         # Store Configurations
         self._data_provider = data_provider
         self._brain_configuration = brain_configuration
-        self._env_observer = env_observer
 
         # Initialize Runtime Variables
-        self._live = False
+        self._observing = False
         self._model = None
         self._using_multi_symbol_scenarios = None
 
@@ -135,13 +133,14 @@ class Brain:
 
         return internal_environment, environment, info[0]
 
-    def evaluate_live(self, scenario: Scenario):
+    def start_observing(self, scenario: Scenario, observer: Observer = None):
         # TODO: This is done only for PortfolioStocksEnv
         # TODO: Validate that scenario is without end_date
         internal_environment, environment, info = self._analyze_scenario(scenario, render=False)
 
-        self._live = True
-        while self._live:
+        internal_environment.observer = observer
+        self._observing = True
+        while self._observing:
             logging.info("Running cycle...")
             new_dataframe_per_symbol = self._data_provider.retrieve_datas(scenario)
             internal_environment.append_data(dataframe_per_symbol=new_dataframe_per_symbol)
@@ -165,6 +164,9 @@ class Brain:
             time.sleep(10)
 
         return info
+
+    def stop_observing(self):
+        self._observing = False
 
     def _init_model(self, env):
         policy_kwargs = dict(act_fun=tf.nn.tanh,
@@ -206,7 +208,6 @@ class Brain:
                                  dataframe_per_symbol=dataframe_per_symbol,
                                  window_size=self._brain_configuration.window_size,
                                  prices_feature_name=self._brain_configuration.prices_feature_name,
-                                 signal_feature_names=self._brain_configuration.signal_feature_names,
-                                 env_observer=self._env_observer)
+                                 signal_feature_names=self._brain_configuration.signal_feature_names)
 
         return env

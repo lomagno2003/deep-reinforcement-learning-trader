@@ -4,7 +4,8 @@ from datetime import timedelta
 
 from drltrader.brain.brain import Brain
 from drltrader.data.scenario import Scenario
-from drltrader.envs.observers.simple_env_observer import PrintEnvObserver
+from drltrader.observers import Order
+from drltrader.observers.simple_observer import CallbackObserver
 
 
 class BrainTestCase(unittest.TestCase):
@@ -23,7 +24,8 @@ class BrainTestCase(unittest.TestCase):
                                                       end_date=datetime(year=2022, month=3, day=end_day))
         self.testing_scenario_multi_stock = self.training_scenario_multi_stock
         self.observing_scenario_multi_stock = Scenario(symbols=['TSLA', 'AAPL', 'MSFT'],
-                                                       start_date=datetime.now() - timedelta(days=2))
+                                                       start_date=datetime.now() - timedelta(days=5),
+                                                       end_date=datetime.now() - timedelta(days=3))
 
     def test_learn_single_stock(self):
         # Arrange
@@ -66,16 +68,22 @@ class BrainTestCase(unittest.TestCase):
         # Assert
         self.assertIsNotNone(results)
 
-    def test_learn_evaluate_live_multi_stock(self):
+    def test_learn_observe_multi_stock(self):
         # Arrange
-        brain: Brain = Brain(env_observer=PrintEnvObserver())
+        brain: Brain = Brain()
+        self._processed = False
+
+        def stop_observing(order: Order):
+            brain.stop_observing()
+            self._processed = True
 
         # Act
         brain.learn(training_scenario=self.training_scenario_multi_stock)
-        brain.evaluate_live(scenario=self.observing_scenario_multi_stock)
+        brain.start_observing(scenario=self.observing_scenario_multi_stock,
+                              observer=CallbackObserver(callback_function=stop_observing))
 
         # Assert
-        self.assertIsNotNone(None)
+        self.assertTrue(self._processed)
 
 
 if __name__ == '__main__':

@@ -2,10 +2,10 @@ from telegram import *
 from telegram.ext import *
 import json
 
-from drltrader.envs.observers import EnvObserver
+from drltrader.observers import Observer, Order
 
 
-class TelegramEnvObserver(EnvObserver):
+class TelegramEnvObserver(Observer):
     def __init__(self,
                  config_file_name: str = 'config.json'):
         with open(config_file_name) as config_file:
@@ -15,13 +15,10 @@ class TelegramEnvObserver(EnvObserver):
         self._char_group_id = config['telegram']['chat_id']
         self._updater = Updater(token=self._telegram_token)
 
-    def notify_stock_buy(self, symbol, qty, price):
+    def notify_order(self, order: Order):
+        text = f"There was an order to {order.side} {order.qty} stocks of {order.symbol}"
         self._updater.bot.send_message(chat_id=self._char_group_id,
-                                       text=f"{symbol} was bought at {price}!")
-
-    def notify_stock_sell(self, symbol, qty, price):
-        self._updater.bot.send_message(chat_id=self._char_group_id,
-                                       text=f"{symbol} was sold at {price}!")
+                                       text=text)
 
     def start_polling(self):
         dispatcher = self._updater.dispatcher

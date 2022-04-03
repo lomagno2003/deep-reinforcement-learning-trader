@@ -3,7 +3,7 @@ import json
 import logging
 
 
-from drltrader.envs.observers import EnvObserver
+from drltrader.observers import Observer, Order
 
 logging.basicConfig(format='%(asctime)s %(message)s',
                     filename='logs/training.log',
@@ -11,7 +11,7 @@ logging.basicConfig(format='%(asctime)s %(message)s',
                     level=logging.DEBUG)
 
 
-class AlpacaEnvObserver(EnvObserver):
+class AlpacaEnvObserver(Observer):
     def __init__(self,
                  config_file_name: str = 'config.json'):
         with open(config_file_name) as config_file:
@@ -29,24 +29,14 @@ class AlpacaEnvObserver(EnvObserver):
         # Test it works
         logging.info(f"The status of the alpaca account is {api.get_account()}")
 
-    def notify_stock_buy(self, symbol, qty, price):
-        quantity = "10"
-        order = self._alpaca_api.submit_order(symbol=symbol,
+    def notify_order(self, order: Order):
+        quantity = str(int(10000.0 / order.price))
+
+        order = self._alpaca_api.submit_order(symbol=order.symbol,
                                               qty=quantity,
-                                              side="buy",
+                                              side=order.side,
                                               type="market",
                                               time_in_force="day")
 
-        logging.info(f"Order to buy {quantity} {symbol} stocks submitted")
-        logging.debug(order.__dict__)
-
-    def notify_stock_sell(self, symbol, qty, price):
-        quantity = "10"
-        order = self._alpaca_api.submit_order(symbol=symbol,
-                                              qty=quantity,
-                                              side="sell",
-                                              type="market",
-                                              time_in_force="day")
-
-        logging.info(f"Order to sell {quantity} {symbol} stocks submitted")
+        logging.info(f"Order to {order.side} {quantity} {order.symbol} stocks submitted")
         logging.debug(order.__dict__)

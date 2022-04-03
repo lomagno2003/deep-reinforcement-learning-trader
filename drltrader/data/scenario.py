@@ -21,7 +21,7 @@ class Scenario:
 
     def __str__(self):
         if self.symbol is not None:
-            symbols_space = f"{self.symbols}"
+            symbols_space = f"{self.symbol}"
         else:
             symbols_space = "_".join(self.symbols)
 

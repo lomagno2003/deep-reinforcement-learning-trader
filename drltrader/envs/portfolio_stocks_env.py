@@ -4,7 +4,7 @@ import pandas as pd
 from gym import spaces
 import matplotlib.pyplot as plt
 
-from drltrader.envs.observers import EnvObserver
+from drltrader.observers import Order, Sides
 
 
 class PortfolioStocksEnv(gym.Env):
@@ -17,8 +17,7 @@ class PortfolioStocksEnv(gym.Env):
                  dataframe_per_symbol: dict,
                  initial_portfolio_allocation: dict,
                  prices_feature_name: str = 'Close',
-                 signal_feature_names: list = ['RSI_4', 'RSI_16'],
-                 env_observer: EnvObserver = None):
+                 signal_feature_names: list = ['RSI_4', 'RSI_16']):
         super(PortfolioStocksEnv, self).__init__()
 
         # Save Configurations
@@ -27,7 +26,6 @@ class PortfolioStocksEnv(gym.Env):
         self._dataframe_per_symbol = dataframe_per_symbol
         self._prices_feature_name = prices_feature_name
         self._signal_feature_names = signal_feature_names
-        self._env_observer = env_observer
 
         # Initialize Custom Configurations
         self._reset_enabled = True
@@ -42,6 +40,7 @@ class PortfolioStocksEnv(gym.Env):
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=self.shape, dtype=np.float32)
 
         # Initialize Runtime Variables
+        self.observer = None
         self._done = None
         self._current_tick = None
         self._portfolio_allocation = None
@@ -116,7 +115,7 @@ class PortfolioStocksEnv(gym.Env):
 
     def render_all(self):
         for symbol in self._prices_per_symbol:
-            plt.plot(self._prices_per_symbol[symbol])
+            plt.plot(self._prices_per_symbol[symbol], label=symbol)
 
         allocated = []
         allocated_prices = []
@@ -135,6 +134,7 @@ class PortfolioStocksEnv(gym.Env):
         plt.suptitle(
             "Total Profit: %.6f" % self.current_profit()
         )
+        plt.legend()
 
     def close(self):
         # TODO: Stub-method
@@ -190,9 +190,15 @@ class PortfolioStocksEnv(gym.Env):
         self._portfolio_allocation[target_symbol] = target_symbol_original_shares + target_symbol_new_shares
 
         # Notify Observer
-        if self._env_observer is not None:
-            self._env_observer.notify_stock_buy(target_symbol, target_symbol_new_shares, target_symbol_price)
-            self._env_observer.notify_stock_sell(source_symbol, source_symbol_shares, source_symbol_price)
+        if self.observer is not None:
+            self.observer.notify_order(Order(symbol=target_symbol,
+                                             qty=target_symbol_new_shares,
+                                             price=target_symbol_price,
+                                             side=Sides.Buy))
+            self.observer.notify_order(Order(symbol=source_symbol,
+                                             qty=source_symbol_shares,
+                                             price=source_symbol_price,
+                                             side=Sides.Sell))
 
         # Statistics
         allocation_details = {
