@@ -5,7 +5,7 @@ import json
 from drltrader.observers import Observer, Order
 
 
-class TelegramEnvObserver(Observer):
+class TelegramObserver(Observer):
     def __init__(self,
                  config_file_name: str = 'config.json'):
         with open(config_file_name) as config_file:
@@ -22,7 +22,7 @@ class TelegramEnvObserver(Observer):
 
     def start_polling(self):
         dispatcher = self._updater.dispatcher
-        dispatcher.add_handler(CommandHandler("portfolio", TelegramEnvObserver.portfolio_command))
+        dispatcher.add_handler(CommandHandler("portfolio", TelegramObserver.portfolio_command))
         self._updater.start_polling()
 
     def stop_polling(self):

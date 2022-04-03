@@ -7,3 +7,4 @@ tests/temp/*
 *__pycache__*
 logs/*
 config.json
+temp/*

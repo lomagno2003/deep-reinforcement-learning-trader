@@ -12,3 +12,12 @@ class CallbackObserver(Observer):
 
     def notify_order(self, order: Order):
         self._callback_function(order)
+
+
+class CompositeObserver(Observer):
+    def __init__(self, observers: list):
+        self._observers = observers
+
+    def notify_order(self, order: Order):
+        for observer in self._observers:
+            observer.notify_order(order)

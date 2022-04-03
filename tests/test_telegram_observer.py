@@ -1,13 +1,13 @@
 import unittest
 
 from drltrader.observers import Order, Sides
-from drltrader.observers.telegram_observer import TelegramEnvObserver
+from drltrader.observers.telegram_observer import TelegramObserver
 
 
 class TelegramEnvObserverTestCase(unittest.TestCase):
     def test_notify_stock_buy(self):
         # Arrange
-        telegram_observer: TelegramEnvObserver = TelegramEnvObserver()
+        telegram_observer: TelegramObserver = TelegramObserver()
 
         # Act/Assert
         telegram_observer.notify_order(Order(symbol='TSLA', qty=1.0, price=1.0, side=Sides.Buy))
@@ -17,7 +17,7 @@ class TelegramEnvObserverTestCase(unittest.TestCase):
 
     def test_start_stop_polling(self):
         # Arrange
-        telegram_observer: TelegramEnvObserver = TelegramEnvObserver()
+        telegram_observer: TelegramObserver = TelegramObserver()
 
         # Act/Assert
         telegram_observer.start_polling()

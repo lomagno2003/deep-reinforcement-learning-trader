@@ -24,11 +24,11 @@ class TrainingRunner:
         print("Training best brain")
         best_brain = Brain(data_provider=self._data_provider,
                            brain_configuration=best_brain_configuration)
-        best_brain.learn(self._training_scenarios[0], total_timesteps=100000)
+        best_brain.learn(self._training_scenarios[0], total_timesteps=1000)
 
         # Save brain
         print("Saving best brain")
-        best_brain.save("best_brain")
+        best_brain.save("temp/best_brain")
 
     def _initiate_scenarios(self):
         self._training_scenarios = [Scenario(symbols=self._symbols,
@@ -44,8 +44,8 @@ class TrainingRunner:
         self._training_configuration = TrainingConfiguration(training_scenarios=self._training_scenarios,
                                                              testing_scenarios=self._testing_scenarios,
                                                              generations=1,
-                                                             start_population=20,
-                                                             stop_population=5,
+                                                             start_population=4,
+                                                             stop_population=2,
                                                              step_population=-1,
                                                              start_timesteps=1000,
                                                              stop_timesteps=20000,

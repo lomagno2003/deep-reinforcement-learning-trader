@@ -11,7 +11,7 @@ logging.basicConfig(format='%(asctime)s %(message)s',
                     level=logging.DEBUG)
 
 
-class AlpacaEnvObserver(Observer):
+class AlpacaObserver(Observer):
     def __init__(self,
                  config_file_name: str = 'config.json'):
         with open(config_file_name) as config_file:
