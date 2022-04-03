@@ -1,0 +1,6 @@
+{
+  "telegram": {
+    "token": "EXAMPLE_TOKEN",
+    "chat_id": "EXAMPE_GROUP_ID"
+  }
+}

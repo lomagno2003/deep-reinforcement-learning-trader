@@ -6,3 +6,4 @@ yfinance
 finta
 pandas
 pygad
+python-telegram-bot
