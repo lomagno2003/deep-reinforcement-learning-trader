@@ -26,6 +26,23 @@ class DataProviderTestCase(unittest.TestCase):
         pd.set_option('display.max_columns', None)
         print(dataframe.head())
 
+    def test_retrieve_datas(self):
+        # Arrange
+        testing_scenario = Scenario(symbols=['TSLA', 'MELI'],
+                                    start_date=datetime.now() - timedelta(days=30),
+                                    end_date=datetime.now())
+
+        data_provider: DataProvider = DataProvider()
+
+        # Act
+        dataframe_per_symbol = data_provider.retrieve_datas(testing_scenario)
+
+        # Assert
+        self.assertIsNotNone(dataframe_per_symbol)
+        self.assertIsNotNone(data_provider.indicator_column_names)
+
+        pd.set_option('display.max_columns', None)
+
     def test_retrieve_data_without_end_date(self):
         # Arrange
         data_provider: DataProvider = DataProvider()

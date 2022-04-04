@@ -22,8 +22,19 @@ class DataProvider:
 
     def retrieve_datas(self, scenario: Scenario):
         dataframe_per_symbol = {}
+
+        intersection_index = None
+
         for symbol in scenario.symbols:
             dataframe_per_symbol[symbol] = self.retrieve_data(scenario.clone_with_symbol(symbol))
+
+            if intersection_index is None:
+                intersection_index = dataframe_per_symbol[symbol].index
+            else:
+                intersection_index = intersection_index.intersection(dataframe_per_symbol[symbol].index)
+
+        for symbol in dataframe_per_symbol:
+            dataframe_per_symbol[symbol] = dataframe_per_symbol[symbol].loc[intersection_index]
 
         return dataframe_per_symbol
 

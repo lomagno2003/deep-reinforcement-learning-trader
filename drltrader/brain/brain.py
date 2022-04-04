@@ -69,7 +69,7 @@ class Brain:
 
     def evaluate(self,
                  testing_scenario: Scenario,
-                 render=True):
+                 render=False):
         _, _, info = self._analyze_scenario(testing_scenario, render=render)
         return info
 
@@ -121,7 +121,7 @@ class Brain:
 
         # Save brain
         model_path = f"{path}/model"
-        brain_configuration_path = f"{path}/brain_configuration.json"
+        brain_configuration_path = f"{path}/brain_configuration.pickle"
 
         with open(brain_configuration_path, 'wb') as brain_configuration_file:
             self._model.save(model_path)
@@ -130,7 +130,7 @@ class Brain:
     @staticmethod
     def load(path: str):
         model_path = f"{path}/model"
-        brain_configuration_path = f"{path}/brain_configuration.json"
+        brain_configuration_path = f"{path}/brain_configuration.pickle"
 
         with open(brain_configuration_path, 'rb') as brain_configuration_file:
             brain_configuration: BrainConfiguration = BrainConfiguration(**pickle.load(brain_configuration_file))
