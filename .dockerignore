@@ -1,0 +1,9 @@
+notebooks*
+tests*
+logs*
+**/*pycache*
+**/*.pyc
+**DS_Store**
+venv*
+README.md
+.git*

@@ -20,13 +20,13 @@ class SingleStockEnv(StocksEnv):
 
     def _process_data(self):
         # FIXME: Probably there's a better way to do this
-        self.df['Current Profit'] = 0.0
-        self.df['Position Start Time'] = 0.0
+        self.df.insert(0, "current_profit", 0.0, allow_duplicates=False)
+        self.df.insert(0, "position_start_time", 0.0, allow_duplicates=False)
 
         start = self.frame_bound[0] - self.window_size
         end = self.frame_bound[1]
         prices = self.df.loc[:, self._prices_feature_name].to_numpy()[start:end]
-        signal_features = self.df.loc[:, ['Current Profit', 'Position Start Time'] + self._signal_feature_names].to_numpy()[start:end]
+        signal_features = self.df.loc[:, ['current_profit', 'position_start_time'] + self._signal_feature_names].to_numpy()[start:end]
         return prices, signal_features
 
     def _calculate_reward(self, action):

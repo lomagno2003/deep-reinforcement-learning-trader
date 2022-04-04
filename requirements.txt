@@ -1,5 +1,4 @@
-tensorflow
-stable-baselines
+stable-baselines3
 gym
 gym-anytrading
 yfinance

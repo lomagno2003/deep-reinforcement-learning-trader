@@ -79,13 +79,8 @@ class PortfolioStocksEnv(gym.Env):
 
     def get_step_outputs(self):
         self._done = self._current_tick == self._frame_bound[1]
-
-        if self._done:
-            observation = None
-            reward = 0.0
-        else:
-            observation = self._get_observation(self._current_tick)
-            reward = self.current_profit()
+        observation = self._get_observation(self._current_tick)
+        reward = self.current_profit()
 
         return observation, reward, self._done, self._get_info()
 

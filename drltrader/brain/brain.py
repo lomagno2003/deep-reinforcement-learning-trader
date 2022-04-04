@@ -7,12 +7,9 @@ from pathlib import Path
 import pickle
 import shutil
 
-import tensorflow as tf
-from stable_baselines.common.vec_env import DummyVecEnv, VecNormalize
-from stable_baselines import A2C
+from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
+from stable_baselines3 import A2C
 from matplotlib import pyplot as plt
-from stable_baselines.common.callbacks import EvalCallback
-from stable_baselines.common.callbacks import BaseCallback
 
 from drltrader.data.data_provider import DataProvider
 from drltrader.data.scenario import Scenario
@@ -24,23 +21,6 @@ logging.basicConfig(format='%(asctime)s %(message)s',
                     filename='logs/training.log',
                     encoding='utf-8',
                     level=logging.DEBUG)
-
-
-# FIXME: This callback doesn't work with PorfolioStocksEnv
-class CustomCallback(BaseCallback):
-    def _on_step(self):
-        if not hasattr(self, 'infos'):
-            self.infos = []
-
-        self.infos.append(self.locals['info'])
-
-        initial_price = self.model.env.envs[0].prices[self.model.env.envs[0].frame_bound[0]]
-        final_price = self.model.env.envs[0].prices[self.model.env.envs[0].frame_bound[1] - 1]
-        benchmark_profit = 1.0 + (final_price - initial_price) / initial_price
-
-        print(f"Benchmark: {benchmark_profit}")
-        print(f"Profits: {list(map(lambda x: x['total_profit'], self.infos))}")
-        print(f"Rewards: {list(map(lambda x: x['total_reward'], self.infos))}")
 
 
 class BrainConfiguration:
@@ -77,7 +57,6 @@ class Brain:
 
     def learn(self,
               training_scenario: Scenario,
-              testing_scenario: Scenario = None,
               total_timesteps: int = 1000):
         training_environment = self._build_environment(training_scenario)
 
@@ -86,20 +65,7 @@ class Brain:
         else:
             self._model.set_env(training_environment)
 
-        eval_callback = None
-        if testing_scenario is not None:
-            testing_environment = self._build_environment(testing_scenario)
-
-            eval_callback = EvalCallback(testing_environment,
-                                         best_model_save_path='./logs/',
-                                         log_path='./logs/',
-                                         eval_freq=500,
-                                         deterministic=True,
-                                         render=False,
-                                         callback_on_new_best=CustomCallback(),
-                                         verbose=0)
-
-        self._model.learn(total_timesteps=total_timesteps, callback=eval_callback)
+        self._model.learn(total_timesteps=total_timesteps)
 
     def evaluate(self,
                  testing_scenario: Scenario,
@@ -174,12 +140,10 @@ class Brain:
             return new_brain
 
     def _init_model(self, env):
-        policy_kwargs = dict(act_fun=tf.nn.tanh,
-                             net_arch=['lstm',
-                                       self._brain_configuration.first_layer_size,
+        policy_kwargs = dict(net_arch=[self._brain_configuration.first_layer_size,
                                        self._brain_configuration.second_layer_size])
 
-        self._model = A2C('MlpLstmPolicy', env, verbose=0, policy_kwargs=policy_kwargs)
+        self._model = A2C('MlpPolicy', env, verbose=0, policy_kwargs=policy_kwargs)
 
     def _analyze_scenario(self,
                           scenario: Scenario,
