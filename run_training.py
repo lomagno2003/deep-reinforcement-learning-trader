@@ -1,8 +1,9 @@
 from datetime import datetime
 from datetime import timedelta
 
-from drltrader.data.data_provider import DataProvider, Scenario
 from drltrader.brain.brain import Brain, BrainConfiguration
+from drltrader.brain.brain_repository_file import BrainRepositoryFile
+from drltrader.data.data_provider import DataProvider, Scenario
 from drltrader.trainer.evolutionary_trainer import EvolutionaryTrainer, TrainingConfiguration
 
 
@@ -28,7 +29,7 @@ class TrainingRunner:
 
         # Save brain
         print("Saving best brain")
-        best_brain.save("temp/best_brain", override=True)
+        BrainRepositoryFile().save("best_brain", best_brain, override=True)
 
     def _initiate_scenarios(self):
         self._training_scenarios = [Scenario(symbols=self._symbols,

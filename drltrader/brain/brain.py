@@ -2,10 +2,6 @@ import numpy as np
 import json
 import logging
 import time
-import os
-from pathlib import Path
-import pickle
-import shutil
 
 from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
 from stable_baselines3 import A2C
@@ -107,37 +103,6 @@ class Brain:
 
     def stop_observing(self):
         self._observing = False
-
-    def save(self, path: str, override: bool = False):
-        # Check and create directory
-        directory_exists = (Path.cwd() / path).exists()
-        if directory_exists:
-            if not override:
-                raise FileExistsError(f"There's already another file/folder with name {path}")
-            else:
-                shutil.rmtree(path)
-
-        os.mkdir(path)
-
-        # Save brain
-        model_path = f"{path}/model"
-        brain_configuration_path = f"{path}/brain_configuration.pickle"
-
-        with open(brain_configuration_path, 'wb') as brain_configuration_file:
-            self._model.save(model_path)
-            pickle.dump(self._brain_configuration.__dict__, brain_configuration_file)
-
-    @staticmethod
-    def load(path: str):
-        model_path = f"{path}/model"
-        brain_configuration_path = f"{path}/brain_configuration.pickle"
-
-        with open(brain_configuration_path, 'rb') as brain_configuration_file:
-            brain_configuration: BrainConfiguration = BrainConfiguration(**pickle.load(brain_configuration_file))
-            new_brain = Brain(brain_configuration=brain_configuration)
-            new_brain._model = A2C.load(model_path)
-
-            return new_brain
 
     def _init_model(self, env):
         policy_kwargs = dict(net_arch=[self._brain_configuration.first_layer_size,

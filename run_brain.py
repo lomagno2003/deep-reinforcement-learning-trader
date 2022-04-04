@@ -4,6 +4,7 @@ from datetime import timedelta
 from flask import Flask
 
 from drltrader.brain.brain import Brain
+from drltrader.brain.brain_repository_file import BrainRepositoryFile
 from drltrader.observers.simple_observer import CompositeObserver
 from drltrader.observers.alpaca_observer import AlpacaObserver
 from drltrader.observers.telegram_observer import TelegramObserver
@@ -19,7 +20,7 @@ class BrainRunner:
         print("Loading brain")
         symbols = ['SPY', 'TDOC', 'ETSY', 'MELI', 'SE', 'SQ', 'DIS', 'TSLA', 'AAPL', 'MSFT', 'SHOP']
 
-        brain: Brain = Brain.load("temp/best_brain")
+        brain: Brain = BrainRepositoryFile().load("best_brain")
 
         # Start Observing
         print("Starting observation")
