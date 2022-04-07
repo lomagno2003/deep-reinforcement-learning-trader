@@ -10,3 +10,4 @@ config.json
 temp/*
 gcloud-creds.json
 tests/gcloud-creds.json
+notebooks/.ipynb_checkpoints/*

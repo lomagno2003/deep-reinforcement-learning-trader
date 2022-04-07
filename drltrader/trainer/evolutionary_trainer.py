@@ -18,7 +18,6 @@ class TrainingConfiguration:
                  training_scenarios: list,
                  testing_scenarios: list,
                  generations: int = 2,
-                 parents_per_generation: int = 2,
                  start_population: int = 6,
                  stop_population: int = 4,
                  step_population: int = -1,
@@ -30,7 +29,6 @@ class TrainingConfiguration:
         self.testing_scenarios = testing_scenarios
 
         self.generations = generations
-        self.parents_per_generation = parents_per_generation
 
         self.start_population = start_population
         self.stop_population = stop_population + 1
@@ -97,7 +95,7 @@ class EvolutionaryTrainer:
                                           on_generation=EvolutionaryTrainer._on_generation,
 
                                           crossover_type='uniform',
-                                          num_parents_mating=self.training_configuration.parents_per_generation,
+                                          num_parents_mating=int(self.current_population / 2.0),
                                           keep_parents=0,
 
                                           mutation_type='random',
@@ -121,6 +119,9 @@ class EvolutionaryTrainer:
                                      len(current_population_values) - 1)
         trainer.current_population = current_population_values[current_population_idx]
         trainer.genetic_algorithm.num_offspring = trainer.current_population
+
+        # Update Parents
+        trainer.genetic_algorithm.num_parents_mating = int(trainer.genetic_algorithm.num_offspring / 2.0)
 
         # Update Timesteps
         current_timesteps_values = list(range(trainer.training_configuration.start_timesteps,

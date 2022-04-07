@@ -115,7 +115,7 @@ class EvolutionaryTrainerTestCase(unittest.TestCase):
                                                        start_population=20,
                                                        stop_population=5,
                                                        step_population=-1,
-                                                       start_timesteps=1000,
+                                                       start_timesteps=100,
                                                        stop_timesteps=20000,
                                                        step_timesteps=500,
                                                        solutions_statistics_filename='logs/solutions.csv')
