@@ -77,6 +77,7 @@ class Brain:
         internal_environment.observer = observer
         self._observing = True
         while self._observing:
+            print("Running cycle...")
             logging.info("Running cycle...")
             new_dataframe_per_symbol = self._data_provider.retrieve_datas(scenario)
             internal_environment.append_data(dataframe_per_symbol=new_dataframe_per_symbol)

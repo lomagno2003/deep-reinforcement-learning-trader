@@ -33,13 +33,13 @@ class TrainingRunner:
 
     def _initiate_scenarios(self):
         self._training_scenarios = [Scenario(symbols=self._symbols,
-                                             interval='1d',
-                                             start_date=datetime.now() - timedelta(days=720),
-                                             end_date=datetime.now() - timedelta(days=50))]
+                                             interval='1h',
+                                             start_date=datetime.now() - timedelta(days=60),
+                                             end_date=datetime.now() - timedelta(days=10))]
         self._testing_scenarios = [Scenario(symbols=self._symbols,
-                                            interval='1d',
-                                            start_date=datetime.now() - timedelta(days=90),
-                                            end_date=datetime.now() - timedelta(days=10))]
+                                            interval='1h',
+                                            start_date=datetime.now() - timedelta(days=10),
+                                            end_date=datetime.now())]
 
     def _initiate_training_configuration(self):
         self._training_configuration = TrainingConfiguration(training_scenarios=self._training_scenarios,
