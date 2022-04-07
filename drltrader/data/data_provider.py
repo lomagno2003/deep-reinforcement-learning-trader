@@ -42,10 +42,10 @@ class DataProvider:
             scenario = scenario.copy_with_end_date(datetime.now())
 
         if self._cache_enabled and str(scenario) in self._cache:
-            logging.info(f"Data for scenario {scenario} available on cache. Returning saved version...")
+            logger.info(f"Data for scenario {scenario} available on cache. Returning saved version...")
             return self._cache[str(scenario)]
         else:
-            logging.info(f"Data for scenario {scenario} not available on cache. Fetching it...")
+            logger.info(f"Data for scenario {scenario} not available on cache. Fetching it...")
             df = self._fetch_data(scenario)
             self._calculate_indicators(df)
 
@@ -111,7 +111,7 @@ class DataProvider:
         self._calculate_indicators(df)
 
     def _calculate_indicators(self, df):
-        logging.info(f"Calculating indicators...")
+        logger.info(f"Calculating indicators...")
 
         all_indicator_columns_names = []
 
@@ -144,7 +144,7 @@ class DataProvider:
         if self.indicator_column_names is None:
             self.indicator_column_names = all_indicator_columns_names
 
-        logging.info(f"The following indicators were calculated: {self.indicator_column_names}")
+        logger.info(f"The following indicators were calculated: {self.indicator_column_names}")
 
     def _fetch_data(self, scenario):
         ticker = yf.Ticker(scenario.symbol)

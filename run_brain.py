@@ -1,3 +1,5 @@
+import logging
+import logging.config
 from threading import Thread
 from datetime import datetime
 from datetime import timedelta
@@ -10,6 +12,9 @@ from drltrader.observers.alpaca_observer import AlpacaObserver
 from drltrader.observers.telegram_observer import TelegramObserver
 from drltrader.data.data_provider import Scenario
 
+logging.config.fileConfig('log.ini', disable_existing_loggers=False)
+logger = logging.getLogger(__name__)
+
 app = Flask("GCR Port Listener")
 
 
@@ -17,13 +22,13 @@ class BrainRunner:
     @staticmethod
     def run_brain():
         # Load Brain
-        print("Loading brain")
+        logger.info("Loading brain")
         symbols = ['SPY', 'TDOC', 'ETSY', 'MELI', 'SE', 'SQ', 'DIS', 'TSLA', 'AAPL', 'MSFT', 'SHOP']
 
         brain: Brain = BrainRepositoryFile().load("best_brain")
 
         # Start Observing
-        print("Starting observation")
+        logger.info("Starting observation")
         start_date = datetime.now() - timedelta(days=30)
         observation_scenario: Scenario = Scenario(symbols=symbols,
                                                   start_date=start_date,
@@ -31,12 +36,12 @@ class BrainRunner:
         brain.start_observing(scenario=observation_scenario,
                               observer=CompositeObserver([AlpacaObserver(), TelegramObserver()]))
 
-        print("Finish observation")
+        logger.info("Finish observation")
 
     @staticmethod
     def run_flask():
         port = 8080
-        print(f"Listening to port {port}")
+        logger.info(f"Listening to port {port}")
         app.run(debug=False, host="0.0.0.0", port=port)
 
     def launch_brain_async(self):

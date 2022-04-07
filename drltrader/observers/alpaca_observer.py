@@ -25,7 +25,7 @@ class AlpacaObserver(Observer):
                                                api_version='v2')
 
         # Test it works
-        logging.info(f"The status of the alpaca account is {api.get_account()}")
+        logger.info(f"The status of the alpaca account is {api.get_account()}")
 
     def notify_order(self, order: Order):
         quantity = str(int(10000.0 / order.price))
@@ -36,5 +36,5 @@ class AlpacaObserver(Observer):
                                               type="market",
                                               time_in_force="day")
 
-        logging.info(f"Order to {order.side} {quantity} {order.symbol} stocks submitted")
-        logging.debug(order.__dict__)
+        logger.info(f"Order to {order.side} {quantity} {order.symbol} stocks submitted")
+        logger.debug(order.__dict__)

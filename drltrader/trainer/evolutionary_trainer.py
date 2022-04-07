@@ -106,8 +106,8 @@ class EvolutionaryTrainer:
     def _on_generation(ga_instance):
         trainer: EvolutionaryTrainer = EvolutionaryTrainer.INSTANCE
 
-        logging.info(f"Generation {trainer.genetic_algorithm.generations_completed} finished. Here are the results:")
-        logging.info('\t' + trainer.solutions_statistics.to_string().replace('\n', '\n\t'))
+        logger.info(f"Generation {trainer.genetic_algorithm.generations_completed} finished. Here are the results:")
+        logger.info('\t' + trainer.solutions_statistics.to_string().replace('\n', '\n\t'))
 
         # Update Population
         current_population_values = list(range(trainer.training_configuration.start_population,
@@ -129,7 +129,7 @@ class EvolutionaryTrainer:
                                     len(current_timesteps_values) - 1)
         trainer.current_timesteps = current_timesteps_values[current_timesteps_idx]
 
-        logging.info(f"New population: {trainer.current_population}. New timesteps: {trainer.current_timesteps}")
+        logger.info(f"New population: {trainer.current_population}. New timesteps: {trainer.current_timesteps}")
 
     @staticmethod
     def _evaluate_fitness(solution, solution_idx):
@@ -137,27 +137,27 @@ class EvolutionaryTrainer:
         brain_configuration = EvolutionaryTrainer._get_brain_configuration_from_dna(trainer, solution)
         solution_name = f"{trainer.genetic_algorithm.generations_completed}_{solution_idx}"
 
-        logging.info(f"Solution {solution_name}")
-        logging.info(f"Brain Configuration: {brain_configuration}")
+        logger.info(f"Solution {solution_name}")
+        logger.info(f"Brain Configuration: {brain_configuration}")
 
         if solution_name not in trainer.fitness_cache:
-            logging.info("Fitness not in cache, calculating fitness...")
+            logger.info("Fitness not in cache, calculating fitness...")
 
             brain: Brain = Brain(data_provider=trainer.data_provider,
                                  brain_configuration=brain_configuration)
 
             for training_scenario in trainer.training_configuration.training_scenarios:
-                logging.info(f"Training on scenario {training_scenario} with {trainer.current_timesteps} timesteps")
+                logger.info(f"Training on scenario {training_scenario} with {trainer.current_timesteps} timesteps")
                 brain.learn(training_scenario=training_scenario,
                             total_timesteps=trainer.current_timesteps)
-                logging.info(f"Training finished")
+                logger.info(f"Training finished")
 
             mean_testing_profit = 0.0
             for testing_scenario in trainer.training_configuration.testing_scenarios:
-                logging.info(f"Testing on scenario {testing_scenario}")
+                logger.info(f"Testing on scenario {testing_scenario}")
                 info = brain.evaluate(testing_scenario=testing_scenario)
                 profit = info['total_profit'] if 'total_profit' in info else info['current_profit']
-                logging.info(f"Testing finished with profit {profit}")
+                logger.info(f"Testing finished with profit {profit}")
                 mean_testing_profit += profit
 
             mean_testing_profit = mean_testing_profit / len(trainer.training_configuration.testing_scenarios)
@@ -168,12 +168,12 @@ class EvolutionaryTrainer:
             if trainer.training_configuration.solutions_statistics_filename is not None:
                 trainer.solutions_statistics.to_csv(trainer.training_configuration.solutions_statistics_filename)
 
-            logging.info(f"Evaluation Profit: {mean_testing_profit}")
+            logger.info(f"Evaluation Profit: {mean_testing_profit}")
             trainer.fitness_cache[solution_name] = mean_testing_profit
 
             return mean_testing_profit
         else:
-            logging.info("Fitness in cache, returning saved fitness...")
+            logger.info("Fitness in cache, returning saved fitness...")
             return trainer.fitness_cache[solution_name]
 
     @staticmethod

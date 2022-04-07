@@ -1,3 +1,5 @@
+import logging
+import logging.config
 from datetime import datetime
 from datetime import timedelta
 
@@ -5,6 +7,9 @@ from drltrader.brain.brain import Brain, BrainConfiguration
 from drltrader.brain.brain_repository_file import BrainRepositoryFile
 from drltrader.data.data_provider import DataProvider, Scenario
 from drltrader.trainer.evolutionary_trainer import EvolutionaryTrainer, TrainingConfiguration
+
+logging.config.fileConfig('log.ini', disable_existing_loggers=False)
+logger = logging.getLogger(__name__)
 
 
 class TrainingRunner:
@@ -14,22 +19,23 @@ class TrainingRunner:
         self._initiate_training_configuration()
 
         self._data_provider = DataProvider()
+        self._brain_repository = BrainRepositoryFile()
 
     def run(self):
         # Find best brain configuration
-        print("Finding best brain configuration")
+        logger.info("Finding best brain configuration")
         trainer: EvolutionaryTrainer = EvolutionaryTrainer(data_provider=self._data_provider)
         best_brain_configuration: BrainConfiguration = trainer.train(self._training_configuration)
 
         # Train brain
-        print("Training best brain")
+        logger.info("Training best brain")
         best_brain = Brain(data_provider=self._data_provider,
                            brain_configuration=best_brain_configuration)
         best_brain.learn(self._training_scenarios[0], total_timesteps=200000)
 
         # Save brain
-        print("Saving best brain")
-        BrainRepositoryFile().save("best_brain", best_brain, override=True)
+        logger.info("Saving best brain")
+        self._brain_repository.save("best_brain", best_brain, override=True)
 
     def _initiate_scenarios(self):
         self._training_scenarios = [Scenario(symbols=self._symbols,
