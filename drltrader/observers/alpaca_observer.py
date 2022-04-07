@@ -1,14 +1,12 @@
 import alpaca_trade_api as tradeapi
 import json
 import logging
-
+import logging.config
 
 from drltrader.observers import Observer, Order
 
-logging.basicConfig(format='%(asctime)s %(message)s',
-                    filename='logs/training.log',
-                    encoding='utf-8',
-                    level=logging.DEBUG)
+logging.config.fileConfig('log.ini', disable_existing_loggers=False)
+logger = logging.getLogger(__name__)
 
 
 class AlpacaObserver(Observer):

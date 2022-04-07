@@ -1,18 +1,16 @@
 import pandas as pd
 import pygad
 import logging
+import logging.config
 
 from drltrader.brain.brain import BrainConfiguration
 from drltrader.brain.brain import Brain
 from drltrader.data.data_provider import DataProvider
 
-logging.basicConfig(format='%(asctime)s %(message)s',
-                    filename='logs/training.log',
-                    encoding='utf-8',
-                    level=logging.DEBUG)
+logging.config.fileConfig('log.ini', disable_existing_loggers=False)
+logger = logging.getLogger(__name__)
 
 
-# FIXME: parents_per_generation can be set using 50% of the population per generation
 class TrainingConfiguration:
     def __init__(self,
                  training_scenarios: list,

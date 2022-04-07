@@ -1,6 +1,7 @@
 import numpy as np
 import json
 import logging
+import logging.config
 import time
 
 from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
@@ -13,10 +14,8 @@ from drltrader.envs.single_stock_env import SingleStockEnv
 from drltrader.envs.portfolio_stocks_env import PortfolioStocksEnv
 from drltrader.observers import Observer
 
-logging.basicConfig(format='%(asctime)s %(message)s',
-                    filename='logs/training.log',
-                    encoding='utf-8',
-                    level=logging.DEBUG)
+logging.config.fileConfig('log.ini', disable_existing_loggers=False)
+logger = logging.getLogger(__name__)
 
 
 class BrainConfiguration:

@@ -2,14 +2,13 @@ import yfinance as yf
 import pandas as pd
 from datetime import datetime
 import logging
+import logging.config
 from finta import TA
 
 from drltrader.data.scenario import Scenario
 
-logging.basicConfig(format='%(asctime)s %(message)s',
-                    filename='logs/training.log',
-                    encoding='utf-8',
-                    level=logging.DEBUG)
+logging.config.fileConfig('log.ini', disable_existing_loggers=False)
+logger = logging.getLogger(__name__)
 
 
 class DataProvider:
