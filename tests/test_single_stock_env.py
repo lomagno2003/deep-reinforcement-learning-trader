@@ -4,7 +4,7 @@ from datetime import timedelta
 
 from drltrader.data.scenario import Scenario
 from drltrader.envs.single_stock_env import SingleStockEnv
-from drltrader.data.data_provider import DataProvider
+from drltrader.data.ohlcv_data_repository import OHLCVDataRepository
 
 
 class SingleStockEnvTestCase(unittest.TestCase):
@@ -13,7 +13,7 @@ class SingleStockEnvTestCase(unittest.TestCase):
         testing_scenario = Scenario(symbol='TSLA',
                                     start_date=datetime.now() - timedelta(days=30),
                                     end_date=datetime.now())
-        symbol_dataframe = DataProvider().retrieve_data(testing_scenario)
+        symbol_dataframe = OHLCVDataRepository().retrieve_data(testing_scenario)
 
         # Act
         environment = SingleStockEnv(df=symbol_dataframe,

@@ -5,7 +5,7 @@ from datetime import timedelta
 
 from drltrader.data.scenario import Scenario
 from drltrader.envs.portfolio_stocks_env import PortfolioStocksEnv
-from drltrader.data.data_provider import DataProvider
+from drltrader.data.ohlcv_data_repository import OHLCVDataRepository
 
 
 class PortfolioStocksEnvTestCase(unittest.TestCase):
@@ -72,15 +72,15 @@ class PortfolioStocksEnvTestCase(unittest.TestCase):
 
     def test_append_data(self):
         # Arrange
-        data_provider: DataProvider = DataProvider()
+        data_repository: OHLCVDataRepository = OHLCVDataRepository()
         first_scenario = Scenario(symbols=['TSLA', 'MSFT', 'AAPL'],
                                   start_date=datetime.now() - timedelta(days=60),
                                   end_date=datetime.now() - timedelta(days=30))
         second_scenario = Scenario(symbols=['TSLA', 'MSFT', 'AAPL'],
                                    start_date=datetime.now() - timedelta(days=45),
                                    end_date=datetime.now() - timedelta(days=15))
-        first_dataframe_per_symbol = data_provider.retrieve_datas(first_scenario)
-        second_dataframe_per_symbol = data_provider.retrieve_datas(second_scenario)
+        first_dataframe_per_symbol = data_repository.retrieve_datas(first_scenario)
+        second_dataframe_per_symbol = data_repository.retrieve_datas(second_scenario)
 
         initial_portfolio_allocation = {'TSLA': 1.0}
 
@@ -107,7 +107,7 @@ class PortfolioStocksEnvTestCase(unittest.TestCase):
                             start_date=datetime.now() - timedelta(days=30),
                             end_date=datetime.now())
 
-        dataframe_per_symbol = DataProvider().retrieve_datas(scenario)
+        dataframe_per_symbol = OHLCVDataRepository().retrieve_datas(scenario)
 
         return dataframe_per_symbol
 

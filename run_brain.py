@@ -10,7 +10,7 @@ from drltrader.brain.brain_repository_file import BrainRepositoryFile
 from drltrader.observers.simple_observer import CompositeObserver
 from drltrader.observers.alpaca_observer import AlpacaObserver
 from drltrader.observers.telegram_observer import TelegramObserver
-from drltrader.data.data_provider import Scenario
+from drltrader.data.scenario import Scenario
 
 logging.config.fileConfig('log.ini', disable_existing_loggers=False)
 logger = logging.getLogger(__name__)

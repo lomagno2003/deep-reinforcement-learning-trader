@@ -4,8 +4,8 @@ from datetime import datetime
 from datetime import timedelta
 
 from drltrader.brain.brain import BrainConfiguration
-from drltrader.data.data_provider import DataProvider
-from drltrader.data.data_provider import Scenario
+from drltrader.data.ohlcv_data_repository import OHLCVDataRepository
+from drltrader.data.scenario import Scenario
 from drltrader.trainer.evolutionary_trainer import EvolutionaryTrainer, TrainingConfiguration
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
@@ -17,8 +17,8 @@ class EvolutionaryTrainerTestCase(unittest.TestCase):
 
     def test_short_train_single_stock(self):
         # Arrange
-        data_provider: DataProvider = DataProvider()
-        trainer: EvolutionaryTrainer = EvolutionaryTrainer(data_provider=data_provider)
+        data_repository: OHLCVDataRepository = OHLCVDataRepository()
+        trainer: EvolutionaryTrainer = EvolutionaryTrainer(data_repository=data_repository)
 
         training_scenarios = [Scenario(symbol='TSLA',
                                        start_date=datetime.now() - timedelta(days=30),
@@ -38,8 +38,8 @@ class EvolutionaryTrainerTestCase(unittest.TestCase):
 
     def test_big_train_single_stock(self):
         # Arrange
-        data_provider: DataProvider = DataProvider()
-        trainer: EvolutionaryTrainer = EvolutionaryTrainer(data_provider=data_provider)
+        data_repository: OHLCVDataRepository = OHLCVDataRepository()
+        trainer: EvolutionaryTrainer = EvolutionaryTrainer(data_repository=data_repository)
 
         training_scenarios = [Scenario(symbol='TSLA',
                                        start_date=datetime.now() - timedelta(days=30),
@@ -75,8 +75,8 @@ class EvolutionaryTrainerTestCase(unittest.TestCase):
 
     def test_short_train_multi_stock(self):
         # Arrange
-        data_provider: DataProvider = DataProvider()
-        trainer: EvolutionaryTrainer = EvolutionaryTrainer(data_provider=data_provider)
+        data_repository: OHLCVDataRepository = OHLCVDataRepository()
+        trainer: EvolutionaryTrainer = EvolutionaryTrainer(data_repository=data_repository)
 
         symbols = ['TSLA', 'AAPL', 'MSFT', 'SPY', 'SHOP']
         training_scenarios = [Scenario(symbols=symbols,
@@ -96,8 +96,8 @@ class EvolutionaryTrainerTestCase(unittest.TestCase):
 
     def test_big_train_multi_stock(self):
         # Arrange
-        data_provider: DataProvider = DataProvider()
-        trainer: EvolutionaryTrainer = EvolutionaryTrainer(data_provider=data_provider)
+        data_repository: OHLCVDataRepository = OHLCVDataRepository()
+        trainer: EvolutionaryTrainer = EvolutionaryTrainer(data_repository=data_repository)
 
         symbols = ['TSLA', 'AAPL', 'MSFT', 'SPY', 'SHOP']
         training_scenarios = [Scenario(symbols=symbols,

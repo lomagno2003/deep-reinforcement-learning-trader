@@ -8,7 +8,7 @@ from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
 from stable_baselines3 import A2C
 from matplotlib import pyplot as plt
 
-from drltrader.data.data_provider import DataProvider
+from drltrader.data.ohlcv_data_repository import OHLCVDataRepository
 from drltrader.data.scenario import Scenario
 from drltrader.envs.single_stock_env import SingleStockEnv
 from drltrader.envs.portfolio_stocks_env import PortfolioStocksEnv
@@ -39,10 +39,10 @@ class BrainConfiguration:
 
 class Brain:
     def __init__(self,
-                 data_provider: DataProvider = DataProvider(),
+                 data_repository: OHLCVDataRepository = OHLCVDataRepository(),
                  brain_configuration: BrainConfiguration = BrainConfiguration()):
         # Store Configurations
-        self._data_provider = data_provider
+        self._data_repository = data_repository
         self._brain_configuration = brain_configuration
 
         # Initialize Runtime Variables
@@ -78,7 +78,7 @@ class Brain:
         while self._observing:
             print("Running cycle...")
             logger.info("Running cycle...")
-            new_dataframe_per_symbol = self._data_provider.retrieve_datas(scenario)
+            new_dataframe_per_symbol = self._data_repository.retrieve_datas(scenario)
             internal_environment.append_data(dataframe_per_symbol=new_dataframe_per_symbol)
 
             obs, rewards, done, info = internal_environment.get_step_outputs()
@@ -154,7 +154,7 @@ class Brain:
 
     def _build_single_stock_scenario(self, scenario: Scenario):
         # TODO: env_observer is not forwarded to SingleStockEnv
-        symbol_dataframe = self._data_provider.retrieve_data(scenario)
+        symbol_dataframe = self._data_repository.retrieve_data(scenario)
         env = SingleStockEnv(df=symbol_dataframe,
                              window_size=self._brain_configuration.window_size,
                              frame_bound=(self._brain_configuration.window_size, len(symbol_dataframe.index) - 1),
@@ -164,7 +164,7 @@ class Brain:
         return env
 
     def _build_portfolio_stock_scenario(self, scenario: Scenario):
-        dataframe_per_symbol = self._data_provider.retrieve_datas(scenario)
+        dataframe_per_symbol = self._data_repository.retrieve_datas(scenario)
         first_symbol = list(dataframe_per_symbol.keys())[0]
         initial_portfolio_allocation = {first_symbol: 1.0} # FIXME: This is not configurable
 

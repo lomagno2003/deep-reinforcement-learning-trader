@@ -1,0 +1,33 @@
+@startuml
+'https://plantuml.com/class-diagram
+title
+DataRepository data flow
+
+end title
+
+object DataRepository
+object OHLCVDataRepository
+object TechnicalIndicatorsDataFilter
+object NewsDataRepository
+object NewsSentimentAnalyzer
+object NewsSentimentIndicatorsDataFilter
+object StockTweetsDataRepository
+object StockTweetsSentimentAnalyzer
+object StockTweetsSentimentIndicatorsDataFilter
+diamond mergeData
+
+
+OHLCVDataRepository --> TechnicalIndicatorsDataFilter
+TechnicalIndicatorsDataFilter --> mergeData
+
+NewsDataRepository --> NewsSentimentAnalyzer
+NewsSentimentAnalyzer --> NewsSentimentIndicatorsDataFilter
+NewsSentimentIndicatorsDataFilter --> mergeData
+
+StockTweetsDataRepository --> StockTweetsSentimentAnalyzer
+StockTweetsSentimentAnalyzer --> StockTweetsSentimentIndicatorsDataFilter
+StockTweetsSentimentIndicatorsDataFilter --> mergeData
+
+mergeData --> DataRepository
+
+@enduml

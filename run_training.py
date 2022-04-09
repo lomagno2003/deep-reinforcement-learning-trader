@@ -5,7 +5,8 @@ from datetime import timedelta
 
 from drltrader.brain.brain import Brain, BrainConfiguration
 from drltrader.brain.brain_repository_file import BrainRepositoryFile
-from drltrader.data.data_provider import DataProvider, Scenario
+from drltrader.data.ohlcv_data_repository import OHLCVDataRepository
+from drltrader.data.scenario import Scenario
 from drltrader.trainer.evolutionary_trainer import EvolutionaryTrainer, TrainingConfiguration
 
 logging.config.fileConfig('log.ini', disable_existing_loggers=False)
@@ -18,18 +19,18 @@ class TrainingRunner:
         self._initiate_scenarios()
         self._initiate_training_configuration()
 
-        self._data_provider = DataProvider()
+        self._data_repository = OHLCVDataRepository()
         self._brain_repository = BrainRepositoryFile()
 
     def run(self):
         # Find best brain configuration
         logger.info("Finding best brain configuration")
-        trainer: EvolutionaryTrainer = EvolutionaryTrainer(data_provider=self._data_provider)
+        trainer: EvolutionaryTrainer = EvolutionaryTrainer(data_repository=self._data_repository)
         best_brain_configuration: BrainConfiguration = trainer.train(self._training_configuration)
 
         # Train brain
         logger.info("Training best brain")
-        best_brain = Brain(data_provider=self._data_provider,
+        best_brain = Brain(data_repository=self._data_repository,
                            brain_configuration=best_brain_configuration)
         best_brain.learn(self._training_scenarios[0], total_timesteps=200000)
 
@@ -50,12 +51,12 @@ class TrainingRunner:
     def _initiate_training_configuration(self):
         self._training_configuration = TrainingConfiguration(training_scenarios=self._training_scenarios,
                                                              testing_scenarios=self._testing_scenarios,
-                                                             generations=20,
-                                                             start_population=15,
-                                                             stop_population=6,
+                                                             generations=100,
+                                                             start_population=50,
+                                                             stop_population=10,
                                                              step_population=-1,
                                                              start_timesteps=1000,
-                                                             stop_timesteps=20000,
+                                                             stop_timesteps=50000,
                                                              step_timesteps=500,
                                                              solutions_statistics_filename='logs/solutions.csv')
 

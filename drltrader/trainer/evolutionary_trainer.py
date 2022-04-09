@@ -5,7 +5,8 @@ import logging.config
 
 from drltrader.brain.brain import BrainConfiguration
 from drltrader.brain.brain import Brain
-from drltrader.data.data_provider import DataProvider
+from drltrader.data import DataRepository
+from drltrader.data.ohlcv_data_repository import OHLCVDataRepository
 
 logging.config.fileConfig('log.ini', disable_existing_loggers=False)
 logger = logging.getLogger(__name__)
@@ -40,7 +41,7 @@ class TrainingConfiguration:
 
 
 class EvolutionaryTrainer:
-    MAX_LAYER_SIZE = 1024
+    MAX_LAYER_SIZE = 2048
     MIN_LAYER_SIZE = 32
 
     MAX_WINDOW_SIZE = 30
@@ -55,13 +56,13 @@ class EvolutionaryTrainer:
 
     INSTANCE = None
 
-    def __init__(self, data_provider: DataProvider = DataProvider()):
+    def __init__(self, data_repository: DataRepository = OHLCVDataRepository()):
         if EvolutionaryTrainer.INSTANCE is not None:
             raise ValueError("There can be only one instance of Trainer")
 
         EvolutionaryTrainer.INSTANCE = self
 
-        self.data_provider = data_provider
+        self.data_repository = data_repository
 
         self.training_configuration: TrainingConfiguration = None
         self.fitness_cache = None
@@ -81,7 +82,7 @@ class EvolutionaryTrainer:
         return EvolutionaryTrainer._get_brain_configuration_from_dna(self, self.genetic_algorithm.best_solutions[0])
 
     def _initialize_genetic_algorithm(self):
-        genes = len(self.data_provider.indicator_column_names) + EvolutionaryTrainer.FIRST_INDICATOR_GENE_IDX
+        genes = len(self.data_repository.indicator_column_names) + EvolutionaryTrainer.FIRST_INDICATOR_GENE_IDX
         self.genetic_algorithm = pygad.GA(num_generations=self.training_configuration.generations,
                                           num_genes=genes,
                                           init_range_low=0.0,
@@ -129,7 +130,9 @@ class EvolutionaryTrainer:
                                     len(current_timesteps_values) - 1)
         trainer.current_timesteps = current_timesteps_values[current_timesteps_idx]
 
-        logger.info(f"New population: {trainer.current_population}. New timesteps: {trainer.current_timesteps}")
+        logger.info(f"New population: {trainer.current_population}. "
+                    f"New parents: {trainer.genetic_algorithm.num_parents_mating}. "
+                    f"New timesteps: {trainer.current_timesteps}")
 
     @staticmethod
     def _evaluate_fitness(solution, solution_idx):
@@ -143,7 +146,7 @@ class EvolutionaryTrainer:
         if solution_name not in trainer.fitness_cache:
             logger.info("Fitness not in cache, calculating fitness...")
 
-            brain: Brain = Brain(data_provider=trainer.data_provider,
+            brain: Brain = Brain(data_repository=trainer.data_repository,
                                  brain_configuration=brain_configuration)
 
             for training_scenario in trainer.training_configuration.training_scenarios:
@@ -197,10 +200,10 @@ class EvolutionaryTrainer:
 
         signal_feature_names = []
 
-        for indicator_idx in range(0, len(trainer.data_provider.indicator_column_names)):
+        for indicator_idx in range(0, len(trainer.data_repository.indicator_column_names)):
             if dna[EvolutionaryTrainer.FIRST_INDICATOR_GENE_IDX + indicator_idx] > \
                     EvolutionaryTrainer.INDICATOR_GENE_ACTIVATION_THRESHOLD:
-                signal_feature_names.append(trainer.data_provider.indicator_column_names[indicator_idx])
+                signal_feature_names.append(trainer.data_repository.indicator_column_names[indicator_idx])
 
         return BrainConfiguration(first_layer_size=first_layer_size,
                                   second_layer_size=second_layer_size,

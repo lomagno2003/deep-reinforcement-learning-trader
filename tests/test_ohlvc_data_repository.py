@@ -3,25 +3,25 @@ from datetime import datetime
 from datetime import timedelta
 import pandas as pd
 
-from drltrader.data.data_provider import DataProvider
-from drltrader.data.data_provider import Scenario
+from drltrader.data.ohlcv_data_repository import OHLCVDataRepository
+from drltrader.data.scenario import Scenario
 
 
-class DataProviderTestCase(unittest.TestCase):
+class OHLCVDataRepositoryTestCase(unittest.TestCase):
     def test_retrieve_data(self):
         # Arrange
         testing_scenario = Scenario(symbol='TSLA',
                                     start_date=datetime.now() - timedelta(days=30),
                                     end_date=datetime.now())
 
-        data_provider: DataProvider = DataProvider()
+        data_repository: OHLCVDataRepository = OHLCVDataRepository()
 
         # Act
-        dataframe = data_provider.retrieve_data(testing_scenario)
+        dataframe = data_repository.retrieve_data(testing_scenario)
 
         # Assert
         self.assertIsNotNone(dataframe)
-        self.assertIsNotNone(data_provider.indicator_column_names)
+        self.assertIsNotNone(data_repository.indicator_column_names)
 
         pd.set_option('display.max_columns', None)
         print(dataframe.head())
@@ -32,20 +32,20 @@ class DataProviderTestCase(unittest.TestCase):
                                     start_date=datetime.now() - timedelta(days=30),
                                     end_date=datetime.now())
 
-        data_provider: DataProvider = DataProvider()
+        data_repository: OHLCVDataRepository = OHLCVDataRepository()
 
         # Act
-        dataframe_per_symbol = data_provider.retrieve_datas(testing_scenario)
+        dataframe_per_symbol = data_repository.retrieve_datas(testing_scenario)
 
         # Assert
         self.assertIsNotNone(dataframe_per_symbol)
-        self.assertIsNotNone(data_provider.indicator_column_names)
+        self.assertIsNotNone(data_repository.indicator_column_names)
 
         pd.set_option('display.max_columns', None)
 
     def test_retrieve_data_without_end_date(self):
         # Arrange
-        data_provider: DataProvider = DataProvider()
+        data_repository: OHLCVDataRepository = OHLCVDataRepository()
 
         no_end_date_scenario = Scenario(symbol='TSLA',
                                         interval='1d',
@@ -56,8 +56,8 @@ class DataProviderTestCase(unittest.TestCase):
                                 end_date=datetime.now())
 
         # Act
-        no_end_date_dataframe = data_provider.retrieve_data(no_end_date_scenario)
-        now_dataframe = data_provider.retrieve_data(now_scenario)
+        no_end_date_dataframe = data_repository.retrieve_data(no_end_date_scenario)
+        now_dataframe = data_repository.retrieve_data(now_scenario)
 
         # Assert
         self.assertIsNotNone(no_end_date_dataframe)

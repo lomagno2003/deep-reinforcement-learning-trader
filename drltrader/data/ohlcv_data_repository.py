@@ -6,12 +6,13 @@ import logging.config
 from finta import TA
 
 from drltrader.data.scenario import Scenario
+from drltrader.data import DataRepository
 
 logging.config.fileConfig('log.ini', disable_existing_loggers=False)
 logger = logging.getLogger(__name__)
 
 
-class DataProvider:
+class OHLCVDataRepository(DataRepository):
     def __init__(self,
                  cache_enabled: bool = True):
         self.indicator_column_names = None
@@ -42,7 +43,7 @@ class DataProvider:
             scenario = scenario.copy_with_end_date(datetime.now())
 
         if self._cache_enabled and str(scenario) in self._cache:
-            logger.info(f"Data for scenario {scenario} available on cache. Returning saved version...")
+            logger.debug(f"Data for scenario {scenario} available on cache. Returning saved version...")
             return self._cache[str(scenario)]
         else:
             logger.info(f"Data for scenario {scenario} not available on cache. Fetching it...")
@@ -67,19 +68,19 @@ class DataProvider:
         }
         self.indicators_function['VWAP'] = TA.VWAP
         self.indicators_parameters['VWAP'] = {}
-        self.indicators_function['MACD'] = DataProvider._extract_column(TA.MACD, 'SIGNAL')
+        self.indicators_function['MACD'] = OHLCVDataRepository._extract_column(TA.MACD, 'SIGNAL')
         self.indicators_parameters['MACD'] = {
             "period_fast": [4, 8, 12, 16],
             "period_slow": [8, 16, 24, 32],
             "signal": [3, 6, 9, 12]
         }
-        self.indicators_function['PPO'] = DataProvider._extract_column(TA.PPO, 'HISTO')
+        self.indicators_function['PPO'] = OHLCVDataRepository._extract_column(TA.PPO, 'HISTO')
         self.indicators_parameters['PPO'] = {
             "period_fast": [4, 8, 12, 16],
             "period_slow": [8, 16, 24, 32],
             "signal": [3, 6, 9, 12]
         }
-        self.indicators_function['VW_MACD'] = DataProvider._extract_column(TA.VW_MACD, 'SIGNAL')
+        self.indicators_function['VW_MACD'] = OHLCVDataRepository._extract_column(TA.VW_MACD, 'SIGNAL')
         self.indicators_parameters['VW_MACD'] = {
             "period_fast": [4, 8, 12, 16],
             "period_slow": [8, 16, 24, 32],
@@ -111,7 +112,7 @@ class DataProvider:
         self._calculate_indicators(df)
 
     def _calculate_indicators(self, df):
-        logger.info(f"Calculating indicators...")
+        logger.debug(f"Calculating indicators...")
 
         all_indicator_columns_names = []
 
@@ -144,7 +145,7 @@ class DataProvider:
         if self.indicator_column_names is None:
             self.indicator_column_names = all_indicator_columns_names
 
-        logger.info(f"The following indicators were calculated: {self.indicator_column_names}")
+        logger.debug(f"The following indicators were calculated: {self.indicator_column_names}")
 
     def _fetch_data(self, scenario):
         ticker = yf.Ticker(scenario.symbol)

@@ -9,3 +9,4 @@ python-telegram-bot
 alpaca-trade-api
 flask
 google-cloud-storage
+transformers
