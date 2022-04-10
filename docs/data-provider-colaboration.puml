@@ -7,26 +7,20 @@ end title
 
 object DataRepository
 object OHLCVDataRepository
-object TechnicalIndicatorsDataFilter
-object NewsDataRepository
-object NewsSentimentAnalyzer
-object NewsSentimentIndicatorsDataFilter
-object StockTweetsDataRepository
-object StockTweetsSentimentAnalyzer
-object StockTweetsSentimentIndicatorsDataFilter
+object NewsFeedRepository
+object NewsSentimentDataRepository
+object StockTweetsFeedRepository
+object StockTweetsSentimentDataRepository
 diamond mergeData
 
 
-OHLCVDataRepository --> TechnicalIndicatorsDataFilter
-TechnicalIndicatorsDataFilter --> mergeData
+OHLCVDataRepository --> mergeData
 
-NewsDataRepository --> NewsSentimentAnalyzer
-NewsSentimentAnalyzer --> NewsSentimentIndicatorsDataFilter
-NewsSentimentIndicatorsDataFilter --> mergeData
+NewsFeedRepository --> NewsSentimentDataRepository
+NewsSentimentDataRepository --> mergeData
 
-StockTweetsDataRepository --> StockTweetsSentimentAnalyzer
-StockTweetsSentimentAnalyzer --> StockTweetsSentimentIndicatorsDataFilter
-StockTweetsSentimentIndicatorsDataFilter --> mergeData
+StockTweetsFeedRepository --> StockTweetsSentimentDataRepository
+StockTweetsSentimentDataRepository --> mergeData
 
 mergeData --> DataRepository
 

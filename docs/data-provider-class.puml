@@ -1,7 +1,7 @@
 @startuml
 'https://plantuml.com/class-diagram
 
-class DataRepository {
+interface DataRepository {
 +retrieve_datas(scenario: Scenario)
 +retrieve_data(scenario: Scenario)
 }
@@ -9,24 +9,20 @@ class DataRepository {
 class CompositeDataRepository
 
 class OHLCVDataRepository
-class TechnicalIndicatorsDataFilter
 
-class ArticleDataRepository
-class NewsDataRepository
-class StockTweetsDataRepository
-class SentimentAnalyzer
-class SentimentIndicatorDataFilter
+interface TickerFeedRepository
+class NewsFeedRepository
+class StockTweetsFeedRepository
+class SentimentDataRepository
 
 CompositeDataRepository -up-|> DataRepository
 OHLCVDataRepository -up-|> DataRepository
-ArticleDataRepository -up-|> DataRepository
+SentimentDataRepository -up-|> DataRepository
 
 CompositeDataRepository -up-> DataRepository
 
-TechnicalIndicatorsDataFilter -right-> OHLCVDataRepository
+TickerFeedRepository <|-- NewsFeedRepository
+TickerFeedRepository <|-- StockTweetsFeedRepository
+SentimentDataRepository --> TickerFeedRepository
 
-ArticleDataRepository <|-- NewsDataRepository
-ArticleDataRepository <|-- StockTweetsDataRepository
-ArticleDataRepository --> SentimentAnalyzer
-ArticleDataRepository --> SentimentIndicatorDataFilter
 @enduml
