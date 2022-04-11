@@ -7,5 +7,10 @@
     "key": "EXAMPLE_KEY",
     "secret": "EXAMPLE_SECRET",
     "url": "https://paper-api.alpaca.markets"
+  },
+  "twitter": {
+    "api_key": "EXAMPLE_KEY",
+    "api_secret": "EXAMPLE_SECRET",
+    "bearer_token": "EXAMPLE_BEARER_TOKEN"
   }
 }

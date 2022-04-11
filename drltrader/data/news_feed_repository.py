@@ -1,5 +1,6 @@
 import logging.config
 import re
+from datetime import datetime
 import requests
 from bs4 import BeautifulSoup
 from dateutil import parser
@@ -17,7 +18,11 @@ class NewsFeedRepository(TickerFeedRepository):
     def __init__(self):
         self._init_summarization_model()
 
-    def find_articles(self, ticker: str):
+    def get_column_prefix(self):
+        return 'news'
+
+    def find_articles(self, ticker: str, from_date: datetime, to_date: datetime):
+        # TODO: Filter by dates
         ticker_urls = self._search_for_ticker_news_urls(ticker)
 
         summaries = []

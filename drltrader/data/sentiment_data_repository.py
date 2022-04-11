@@ -21,7 +21,10 @@ class Article:
 
 
 class TickerFeedRepository:
-    def find_articles(self, ticker: str) -> list:
+    def get_column_prefix(self):
+        pass
+
+    def find_articles(self, ticker: str, from_date: datetime, to_date: datetime) -> list:
         pass
 
 
@@ -33,7 +36,9 @@ class SentimentDataRepository(DataRepository):
     def retrieve_datas(self, scenario: Scenario):
         result = {}
         for symbol in scenario.symbols:
-            articles = self._ticker_feed_repository.find_articles(symbol)
+            articles = self._ticker_feed_repository.find_articles(ticker=symbol,
+                                                                  from_date=scenario.start_date,
+                                                                  to_date=scenario.end_date)
             articles = self._add_sentiment(articles)
 
             # TODO: Probably there's a better way to do this

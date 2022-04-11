@@ -2,13 +2,13 @@ import unittest
 from datetime import datetime
 from datetime import timedelta
 
-from drltrader.data.news_feed_repository import NewsFeedRepository
+from drltrader.data.stocktwits_feed_repository import StockTwitsFeedRepository
 
 
-class NewsFeedRepositoryTestCase(unittest.TestCase):
+class StockTwitsFeedRepositoryTestCase(unittest.TestCase):
     def test_find_articles(self):
         # Arrange
-        data_repository: NewsFeedRepository = NewsFeedRepository()
+        data_repository: StockTwitsFeedRepository = StockTwitsFeedRepository()
 
         # Act
         articles = data_repository.find_articles('TSLA',
