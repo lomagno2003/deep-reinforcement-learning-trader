@@ -4,7 +4,7 @@ from pathlib import Path
 from datetime import datetime
 
 from drltrader.brain.brain import Brain
-from drltrader.data.scenario import Scenario
+from drltrader.data import Scenario
 from drltrader.brain.brain_repository_gcs import BrainRepositoryGoogleCloudStorage
 
 

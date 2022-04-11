@@ -3,7 +3,7 @@ from datetime import datetime
 from datetime import timedelta
 import pandas as pd
 
-from drltrader.data.scenario import Scenario
+from drltrader.data import Scenario
 from drltrader.data.sentiment_data_repository import SentimentDataRepository
 from drltrader.data.sentiment_data_repository import Article
 from drltrader.data.static_feed_repository import StaticFeedRepository

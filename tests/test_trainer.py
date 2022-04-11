@@ -5,7 +5,7 @@ from datetime import timedelta
 
 from drltrader.brain.brain import BrainConfiguration
 from drltrader.data.ohlcv_data_repository import OHLCVDataRepository
-from drltrader.data.scenario import Scenario
+from drltrader.data import Scenario
 from drltrader.trainer.evolutionary_trainer import EvolutionaryTrainer, TrainingConfiguration
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)

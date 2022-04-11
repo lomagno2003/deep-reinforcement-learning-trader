@@ -2,7 +2,7 @@ import unittest
 from datetime import datetime
 
 from drltrader.brain.brain import Brain
-from drltrader.data.scenario import Scenario
+from drltrader.data import Scenario
 from drltrader.brain.brain_repository_file import BrainRepositoryFile
 
 
@@ -24,7 +24,7 @@ class BrainTestCase(unittest.TestCase):
         brain: Brain = Brain()
         brain.learn(training_scenario=self.training_scenario_multi_stock)
 
-        brain_id = "temp/test_save_and_load"
+        brain_id = "test_save_and_load"
 
         # Act
         brain_repository.save(brain_id, brain, override=True)

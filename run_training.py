@@ -6,7 +6,7 @@ from datetime import timedelta
 from drltrader.brain.brain import Brain, BrainConfiguration
 from drltrader.brain.brain_repository_file import BrainRepositoryFile
 from drltrader.data.ohlcv_data_repository import OHLCVDataRepository
-from drltrader.data.scenario import Scenario
+from drltrader.data import Scenario
 from drltrader.trainer.evolutionary_trainer import EvolutionaryTrainer, TrainingConfiguration
 
 logging.config.fileConfig('log.ini', disable_existing_loggers=False)

@@ -3,7 +3,7 @@ from datetime import datetime
 from datetime import timedelta
 
 from drltrader.brain.brain import Brain
-from drltrader.data.scenario import Scenario
+from drltrader.data import Scenario
 from drltrader.observers import Order
 from drltrader.observers.simple_observer import CallbackObserver
 

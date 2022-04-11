@@ -2,7 +2,7 @@ import unittest
 from datetime import datetime
 from datetime import timedelta
 
-from drltrader.data.scenario import Scenario
+from drltrader.data import Scenario
 from drltrader.envs.single_stock_env import SingleStockEnv
 from drltrader.data.ohlcv_data_repository import OHLCVDataRepository
 

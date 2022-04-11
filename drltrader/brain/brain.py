@@ -9,7 +9,7 @@ from stable_baselines3 import A2C
 from matplotlib import pyplot as plt
 
 from drltrader.data.ohlcv_data_repository import OHLCVDataRepository
-from drltrader.data.scenario import Scenario
+from drltrader.data import Scenario
 from drltrader.envs.single_stock_env import SingleStockEnv
 from drltrader.envs.portfolio_stocks_env import PortfolioStocksEnv
 from drltrader.observers import Observer

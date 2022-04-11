@@ -3,7 +3,7 @@ import random
 from datetime import datetime
 from datetime import timedelta
 
-from drltrader.data.scenario import Scenario
+from drltrader.data import Scenario
 from drltrader.envs.portfolio_stocks_env import PortfolioStocksEnv
 from drltrader.data.ohlcv_data_repository import OHLCVDataRepository
 

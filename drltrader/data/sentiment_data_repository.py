@@ -3,8 +3,7 @@ from datetime import datetime
 
 from transformers import pipeline
 
-from drltrader.data import DataRepository
-from drltrader.data.scenario import Scenario
+from drltrader.data import DataRepository, Scenario
 
 
 class Article:

@@ -44,7 +44,7 @@ class NewsFeedRepository(TickerFeedRepository):
         hrefs = [link['href'] for link in atags]
 
         # TODO: Hardcoded value
-        exclude_list = ['maps', 'policies', 'preferences', 'accounts', 'support', 'video']
+        exclude_list = ['maps', 'policies', 'preferences', 'accounts', 'support', 'video', 'nasdaq']
 
         val = []
         for url in hrefs:
