@@ -52,7 +52,9 @@ class SentimentDataRepository(DataRepository):
             articles_dates = list(map(lambda a: a.datetime, articles))
             articles_sentiment = list(map(lambda a: [1.0, 0.0] if a.sentiment == 'POSITIVE' else [0.0, 1.0], articles))
 
-            symbol_dataframe = pd.DataFrame(columns=['positive_sentiment', 'negative_sentiment'],
+            columns = [f"{self._ticker_feed_repository.get_column_prefix()}_positive_sentiment",
+                       f"{self._ticker_feed_repository.get_column_prefix()}_negative_sentiment"]
+            symbol_dataframe = pd.DataFrame(columns=columns,
                                             index=articles_dates,
                                             data=articles_sentiment)
 

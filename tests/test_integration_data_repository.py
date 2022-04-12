@@ -16,7 +16,7 @@ class DataRepositoryIntegrationTestCase(unittest.TestCase):
         # Arrange
         testing_scenario = Scenario(symbols=['TSLA'],
                                     interval='1h',
-                                    start_date=datetime.now() - timedelta(days=2),
+                                    start_date=datetime.now() - timedelta(days=1),
                                     end_date=datetime.now())
 
         data_repository: DataRepository = IndicatorsDataRepository(

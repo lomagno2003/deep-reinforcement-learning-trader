@@ -20,6 +20,7 @@ class CompositeDataRepository(DataRepository):
                 if symbol not in results:
                     results[symbol] = dr_results[i][symbol]
                     results[symbol] = results[symbol].sort_index()
+                    results[symbol] = results[symbol].tz_localize(None)
 
                     original_index = results[symbol].index
                     timedelta = results[symbol].index[1] - results[symbol].index[0]
