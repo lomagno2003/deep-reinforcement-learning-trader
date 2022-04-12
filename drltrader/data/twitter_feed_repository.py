@@ -27,6 +27,7 @@ class TwitterFeedRepository(TickerFeedRepository):
         return 'twitter'
 
     def find_articles(self, ticker: str, from_date: datetime, to_date: datetime):
+        logger.info(f"Searching tweets for {ticker} from {from_date} to {datetime}")
         # TODO: Add logging
         # FIXME: Current search has up to 7 days history. To improve we need premium API:
         # https://docs.tweepy.org/en/stable/api.html#tweepy.API.search_full_archive
@@ -34,19 +35,22 @@ class TwitterFeedRepository(TickerFeedRepository):
         since = from_date.strftime("%Y-%m-%d")
         until = to_date.strftime("%Y-%m-%d")
 
-        # TODO: Do we need this?
-        max_tweets = 1000
+        # TODO: There's a limitation of 450 request per 15 min period. Each request can retrieve up to 100 tweets
+        # If we hit the limit, the API starts failing for 15 min.
+        max_tweets = 40000
         articles = []
         last_id = -1
 
         while len(articles) < max_tweets:
             count = max_tweets - len(articles)
+            max_id = str(last_id - 1)
 
+            logger.debug(f"Querying twitter search API with max-id: {max_id}")
             new_tweets = self._tweepy_api.search_tweets(q=query,
                                                         since=since,
                                                         until=until,
                                                         count=count,
-                                                        max_id=str(last_id - 1))
+                                                        max_id=max_id)
             if not new_tweets:
                 break
 
@@ -60,4 +64,3 @@ class TwitterFeedRepository(TickerFeedRepository):
             last_id = new_tweets[-1].id
 
         return articles
-

@@ -28,9 +28,9 @@ class SentimentDataRepositoryTestCase(unittest.TestCase):
     def _initialize_data_repository_A(self):
         df = pd.DataFrame()
         df['time'] = pd.date_range('08/12/2021',
-                                   periods=10,
-                                   freq='2S')
-        df['values_a'] = range(0, 10)
+                                   periods=5,
+                                   freq='10S')
+        df['values_a'] = range(0, 5)
         df.set_index('time', inplace=True)
 
         return StaticDataRepository(dataframe_per_symbol={'FOO': df})
@@ -38,9 +38,9 @@ class SentimentDataRepositoryTestCase(unittest.TestCase):
     def _initialize_data_repository_B(self):
         df = pd.DataFrame()
         df['time'] = pd.date_range('08/12/2021',
-                                   periods=5,
+                                   periods=15,
                                    freq='3S')
-        df['values_b'] = range(0, -5, -1)
+        df['values_b'] = range(0, -15, -1)
         df.set_index('time', inplace=True)
 
         return StaticDataRepository(dataframe_per_symbol={'FOO': df})

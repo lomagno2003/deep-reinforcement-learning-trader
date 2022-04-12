@@ -1,9 +1,13 @@
 import pandas as pd
 from datetime import datetime
-
+import logging
+import logging.config
 from transformers import pipeline
 
 from drltrader.data import DataRepository, Scenario
+
+logging.config.fileConfig('log.ini', disable_existing_loggers=False)
+logger = logging.getLogger(__name__)
 
 
 class Article:
@@ -34,6 +38,8 @@ class SentimentDataRepository(DataRepository):
         self._sentiment_analysis_pipeline = pipeline('sentiment-analysis')
 
     def retrieve_datas(self, scenario: Scenario):
+        logger.info(f"Retrieving sentiment for scenario {scenario}")
+
         result = {}
         for symbol in scenario.symbols:
             articles = self._ticker_feed_repository.find_articles(ticker=symbol,
@@ -55,6 +61,7 @@ class SentimentDataRepository(DataRepository):
         return result
 
     def _add_sentiment(self, articles: list):
+        logger.debug(f"Adding sentiment to {len(articles)} articles")
         summaries = list(map(lambda a: a.summary, articles))
         scores = self._sentiment_analysis_pipeline(summaries)
 
