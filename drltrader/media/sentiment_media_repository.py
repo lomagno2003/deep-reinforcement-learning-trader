@@ -14,7 +14,7 @@ class SentimentMediaRepository(TickerMediaRepository):
         self._sentiment_analysis_pipeline = pipeline('sentiment-analysis')
 
     def get_column_prefix(self):
-        return self._source_media_repository.get_column_prefix()
+        return f"s_{self._source_media_repository.get_column_prefix()}"
 
     def find_medias(self, ticker: str, from_date: datetime, to_date: datetime):
         sourced_medias = self._source_media_repository.find_medias(ticker=ticker,

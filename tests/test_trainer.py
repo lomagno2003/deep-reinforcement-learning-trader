@@ -4,7 +4,6 @@ from datetime import datetime
 from datetime import timedelta
 
 from drltrader.brain.brain import BrainConfiguration
-from drltrader.data.ohlcv_data_repository import OHLCVDataRepository
 from drltrader.data import Scenario
 from drltrader.trainer.evolutionary_trainer import EvolutionaryTrainer, TrainingConfiguration
 
@@ -17,8 +16,7 @@ class EvolutionaryTrainerTestCase(unittest.TestCase):
 
     def test_short_train_single_stock(self):
         # Arrange
-        data_repository: OHLCVDataRepository = OHLCVDataRepository()
-        trainer: EvolutionaryTrainer = EvolutionaryTrainer(data_repository=data_repository)
+        trainer: EvolutionaryTrainer = EvolutionaryTrainer()
 
         training_scenarios = [Scenario(symbol='TSLA',
                                        start_date=datetime.now() - timedelta(days=30),
@@ -38,8 +36,7 @@ class EvolutionaryTrainerTestCase(unittest.TestCase):
 
     def test_big_train_single_stock(self):
         # Arrange
-        data_repository: OHLCVDataRepository = OHLCVDataRepository()
-        trainer: EvolutionaryTrainer = EvolutionaryTrainer(data_repository=data_repository)
+        trainer: EvolutionaryTrainer = EvolutionaryTrainer()
 
         training_scenarios = [Scenario(symbol='TSLA',
                                        start_date=datetime.now() - timedelta(days=30),
@@ -75,8 +72,7 @@ class EvolutionaryTrainerTestCase(unittest.TestCase):
 
     def test_short_train_multi_stock(self):
         # Arrange
-        data_repository: OHLCVDataRepository = OHLCVDataRepository()
-        trainer: EvolutionaryTrainer = EvolutionaryTrainer(data_repository=data_repository)
+        trainer: EvolutionaryTrainer = EvolutionaryTrainer()
 
         symbols = ['TSLA', 'AAPL', 'MSFT', 'SPY', 'SHOP']
         training_scenarios = [Scenario(symbols=symbols,
@@ -96,8 +92,7 @@ class EvolutionaryTrainerTestCase(unittest.TestCase):
 
     def test_big_train_multi_stock(self):
         # Arrange
-        data_repository: OHLCVDataRepository = OHLCVDataRepository()
-        trainer: EvolutionaryTrainer = EvolutionaryTrainer(data_repository=data_repository)
+        trainer: EvolutionaryTrainer = EvolutionaryTrainer()
 
         symbols = ['TSLA', 'AAPL', 'MSFT', 'SPY', 'SHOP']
         training_scenarios = [Scenario(symbols=symbols,

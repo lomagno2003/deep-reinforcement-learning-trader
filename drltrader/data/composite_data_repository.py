@@ -1,4 +1,6 @@
 import pandas as pd
+from datetime import timedelta
+from datetime import datetime
 
 from drltrader.data import DataRepository, Scenario
 
@@ -22,10 +24,16 @@ class CompositeDataRepository(DataRepository):
                     results[symbol] = results[symbol].tz_localize(None)
 
                     original_index = results[symbol].index
-                    timedelta = results[symbol].index[1] - results[symbol].index[0]
-                    origin = results[symbol].index[0]
-                    origin = origin.tz_localize(None)
-                    results[symbol] = results[symbol].resample(timedelta, origin=origin).sum()
+
+                    if results[symbol].empty:
+                        interval = timedelta(hours=1)
+                        origin = datetime.fromtimestamp(0)
+                    else:
+                        interval = results[symbol].index[1] - results[symbol].index[0]
+                        origin = results[symbol].index[0]
+                        origin = origin.tz_localize(None)
+
+                    results[symbol] = results[symbol].resample(interval, origin=origin).sum()
                 else:
                     # FIXME: Probably this shouldn't be done here
                     dr_results[i][symbol].index = pd.to_datetime(dr_results[i][symbol].index, utc=True)
@@ -33,7 +41,7 @@ class CompositeDataRepository(DataRepository):
                     results[symbol] = results[symbol].tz_localize(None)
 
                     dr_results[i][symbol] = dr_results[i][symbol].sort_index()
-                    resampled_dataframe = dr_results[i][symbol].resample(timedelta, origin=origin).sum()
+                    resampled_dataframe = dr_results[i][symbol].resample(interval, origin=origin).sum()
 
                     results[symbol] = pd.concat([results[symbol], resampled_dataframe], axis=1).fillna(0.0)
 

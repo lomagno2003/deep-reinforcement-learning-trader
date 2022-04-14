@@ -19,13 +19,12 @@ class TrainingRunner:
         self._initiate_scenarios()
         self._initiate_training_configuration()
 
-        self._data_repository = OHLCVDataRepository()
         self._brain_repository = BrainRepositoryFile()
 
     def run(self):
         # Find best brain configuration
         logger.info("Finding best brain configuration")
-        trainer: EvolutionaryTrainer = EvolutionaryTrainer(data_repository=self._data_repository)
+        trainer: EvolutionaryTrainer = EvolutionaryTrainer()
         best_brain_configuration: BrainConfiguration = trainer.train(self._training_configuration)
 
         # Train brain
@@ -51,7 +50,7 @@ class TrainingRunner:
     def _initiate_training_configuration(self):
         self._training_configuration = TrainingConfiguration(training_scenarios=self._training_scenarios,
                                                              testing_scenarios=self._testing_scenarios,
-                                                             generations=100,
+                                                             generations=50,
                                                              start_population=50,
                                                              stop_population=10,
                                                              step_population=-1,

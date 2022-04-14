@@ -5,8 +5,10 @@ import logging.config
 
 from drltrader.brain.brain import BrainConfiguration
 from drltrader.brain.brain import Brain
+from drltrader.data import DataRepository, Scenario
 from drltrader.data import DataRepository
 from drltrader.data.ohlcv_data_repository import OHLCVDataRepository
+from drltrader.data.indicators_data_repository import IndicatorsDataRepository
 
 logging.config.fileConfig('log.ini', disable_existing_loggers=False)
 logger = logging.getLogger(__name__)
@@ -41,6 +43,7 @@ class TrainingConfiguration:
 
 
 class EvolutionaryTrainer:
+    EXCLUDED_COLUMNS = ['Open', 'High', 'Low', 'Close', 'Volume', 'Adj Close']
     MAX_LAYER_SIZE = 2048
     MIN_LAYER_SIZE = 32
 
@@ -56,7 +59,7 @@ class EvolutionaryTrainer:
 
     INSTANCE = None
 
-    def __init__(self, data_repository: DataRepository = OHLCVDataRepository()):
+    def __init__(self, data_repository: DataRepository = IndicatorsDataRepository(OHLCVDataRepository())):
         if EvolutionaryTrainer.INSTANCE is not None:
             raise ValueError("There can be only one instance of Trainer")
 
@@ -82,7 +85,7 @@ class EvolutionaryTrainer:
         return EvolutionaryTrainer._get_brain_configuration_from_dna(self, self.genetic_algorithm.best_solutions[0])
 
     def _initialize_genetic_algorithm(self):
-        genes = len(self.data_repository.indicator_column_names) + EvolutionaryTrainer.FIRST_INDICATOR_GENE_IDX
+        genes = len(self.data_repository.get_columns_per_symbol()) + EvolutionaryTrainer.FIRST_INDICATOR_GENE_IDX
         self.genetic_algorithm = pygad.GA(num_generations=self.training_configuration.generations,
                                           num_genes=genes,
                                           init_range_low=0.0,
@@ -200,10 +203,13 @@ class EvolutionaryTrainer:
 
         signal_feature_names = []
 
-        for indicator_idx in range(0, len(trainer.data_repository.indicator_column_names)):
+        for indicator_idx in range(0, len(trainer.data_repository.get_columns_per_symbol())):
             if dna[EvolutionaryTrainer.FIRST_INDICATOR_GENE_IDX + indicator_idx] > \
                     EvolutionaryTrainer.INDICATOR_GENE_ACTIVATION_THRESHOLD:
-                signal_feature_names.append(trainer.data_repository.indicator_column_names[indicator_idx])
+                selected_feature = trainer.data_repository.get_columns_per_symbol()[indicator_idx]
+
+                if selected_feature not in EvolutionaryTrainer.EXCLUDED_COLUMNS:
+                    signal_feature_names.append(selected_feature)
 
         return BrainConfiguration(first_layer_size=first_layer_size,
                                   second_layer_size=second_layer_size,

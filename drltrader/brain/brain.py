@@ -8,7 +8,9 @@ from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
 from stable_baselines3 import A2C
 from matplotlib import pyplot as plt
 
+from drltrader.data import DataRepository
 from drltrader.data.ohlcv_data_repository import OHLCVDataRepository
+from drltrader.data.indicators_data_repository import IndicatorsDataRepository
 from drltrader.data import Scenario
 from drltrader.envs.single_stock_env import SingleStockEnv
 from drltrader.envs.portfolio_stocks_env import PortfolioStocksEnv
@@ -39,7 +41,7 @@ class BrainConfiguration:
 
 class Brain:
     def __init__(self,
-                 data_repository: OHLCVDataRepository = OHLCVDataRepository(),
+                 data_repository: DataRepository = IndicatorsDataRepository(OHLCVDataRepository()),
                  brain_configuration: BrainConfiguration = BrainConfiguration()):
         # Store Configurations
         self._data_repository = data_repository

@@ -17,6 +17,9 @@ class CachedMediaRepository(TickerMediaRepository):
         self._source_media_repository = source_media_repository
         self._cache_directory = cache_directory
 
+    def get_column_prefix(self):
+        return f"c_{self._source_media_repository.get_column_prefix()}"
+
     def find_medias(self, ticker: str, from_date: datetime, to_date: datetime):
         self._initialize_directory()
 
@@ -28,7 +31,11 @@ class CachedMediaRepository(TickerMediaRepository):
             return articles
 
     def _parse_cache_path(self, ticker: str, from_date: datetime, to_date: datetime):
-        return f'{self._cache_directory}/{ticker}_{from_date.timestamp()}_{to_date.timestamp()}'
+        return f'{self._cache_directory}/' \
+               f'{self.get_column_prefix()}_' \
+               f'{ticker}_' \
+               f'{from_date.timestamp()}_' \
+               f'{to_date.timestamp()}'
 
     def _initialize_directory(self):
         directory_exists = (Path.cwd() / self._cache_directory).exists()

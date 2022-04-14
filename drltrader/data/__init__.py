@@ -43,7 +43,18 @@ class Scenario:
                         symbol=self.symbol,
                         symbols=self.symbols)
 
+    @staticmethod
+    def empty_scenario():
+        return Scenario(symbols=['FOO'],
+                        start_date=datetime.fromtimestamp(0),
+                        end_date=datetime.fromtimestamp(0))
+
 
 class DataRepository:
     def retrieve_datas(self, scenario: Scenario):
         pass
+
+    def get_columns_per_symbol(self):
+        empty_dataframe = next(iter(self.retrieve_datas(Scenario.empty_scenario()).values()))
+
+        return empty_dataframe.columns
