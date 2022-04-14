@@ -68,7 +68,7 @@ class EvolutionaryTrainer:
         self.fitness_cache = None
         self.solutions_statistics: pd.DataFrame = None
         self.current_population = None
-        self.current_timestep = None
+        self.current_timesteps = None
 
     def train(self, training_configuration: TrainingConfiguration) -> BrainConfiguration:
         self.fitness_cache = {}

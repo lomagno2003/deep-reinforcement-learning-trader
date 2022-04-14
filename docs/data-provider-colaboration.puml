@@ -7,19 +7,19 @@ end title
 
 object DataRepository
 object OHLCVDataRepository
-object NewsFeedRepository
+object NewsMediaRepository
 object NewsSentimentDataRepository
-object StockTweetsFeedRepository
+object StockTweetsMediaRepository
 object StockTweetsSentimentDataRepository
 diamond mergeData
 
 
 OHLCVDataRepository --> mergeData
 
-NewsFeedRepository --> NewsSentimentDataRepository
+NewsMediaRepository --> NewsSentimentDataRepository
 NewsSentimentDataRepository --> mergeData
 
-StockTweetsFeedRepository --> StockTweetsSentimentDataRepository
+StockTweetsMediaRepository --> StockTweetsSentimentDataRepository
 StockTweetsSentimentDataRepository --> mergeData
 
 mergeData --> DataRepository

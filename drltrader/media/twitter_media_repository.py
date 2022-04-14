@@ -3,14 +3,13 @@ import tweepy
 import json
 from datetime import datetime
 
-from drltrader.data.sentiment_data_repository import TickerFeedRepository
-from drltrader.data.sentiment_data_repository import Article
+from drltrader.media import Media, TickerMediaRepository
 
 logging.config.fileConfig('log.ini', disable_existing_loggers=False)
 logger = logging.getLogger(__name__)
 
 
-class TwitterFeedRepository(TickerFeedRepository):
+class TwitterMediaRepository(TickerMediaRepository):
     def __init__(self, config_file_name: str = 'config.json'):
         with open(config_file_name) as config_file:
             config = json.load(config_file)
@@ -26,7 +25,7 @@ class TwitterFeedRepository(TickerFeedRepository):
     def get_column_prefix(self):
         return 'twitter'
 
-    def find_articles(self, ticker: str, from_date: datetime, to_date: datetime):
+    def find_medias(self, ticker: str, from_date: datetime, to_date: datetime):
         logger.info(f"Searching tweets for {ticker} from {from_date} to {datetime}")
         # TODO: Add logging
         # FIXME: Current search has up to 7 days history. To improve we need premium API:
@@ -38,11 +37,11 @@ class TwitterFeedRepository(TickerFeedRepository):
         # TODO: There's a limitation of 450 request per 15 min period. Each request can retrieve up to 100 tweets
         # If we hit the limit, the API starts failing for 15 min.
         max_tweets = 40000
-        articles = []
+        medias = []
         last_id = -1
 
-        while len(articles) < max_tweets:
-            count = max_tweets - len(articles)
+        while len(medias) < max_tweets:
+            count = max_tweets - len(medias)
             max_id = str(last_id - 1)
 
             logger.debug(f"Querying twitter search API with max-id: {max_id}")
@@ -57,10 +56,10 @@ class TwitterFeedRepository(TickerFeedRepository):
             for tweet in new_tweets:
                 tweet_creation_date = tweet.created_at
                 tweet_text = tweet.text
-                articles.append(Article(datetime=tweet_creation_date,
+                medias.append(Media(datetime=tweet_creation_date,
                                         content=tweet_text,
                                         summary=tweet_text))
 
             last_id = new_tweets[-1].id
 
-        return articles
+        return medias

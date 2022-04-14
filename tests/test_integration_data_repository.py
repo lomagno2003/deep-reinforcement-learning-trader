@@ -3,8 +3,8 @@ from datetime import datetime
 from datetime import timedelta
 
 from drltrader.data.sentiment_data_repository import SentimentDataRepository
-from drltrader.data.news_feed_repository import NewsFeedRepository
-from drltrader.data.twitter_feed_repository import TwitterFeedRepository
+from drltrader.data.news_feed_repository import NewsMediaRepository
+from drltrader.data.twitter_feed_repository import TwitterMediaRepository
 from drltrader.data.composite_data_repository import CompositeDataRepository
 from drltrader.data.indicators_data_repository import IndicatorsDataRepository
 from drltrader.data.ohlcv_data_repository import OHLCVDataRepository
@@ -22,8 +22,8 @@ class DataRepositoryIntegrationTestCase(unittest.TestCase):
         data_repository: DataRepository = IndicatorsDataRepository(
             CompositeDataRepository([
                 OHLCVDataRepository(),
-                SentimentDataRepository(NewsFeedRepository()),
-                SentimentDataRepository(TwitterFeedRepository())
+                SentimentDataRepository(NewsMediaRepository()),
+                SentimentDataRepository(TwitterMediaRepository())
             ])
         )
 

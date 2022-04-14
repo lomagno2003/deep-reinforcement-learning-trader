@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 
 from drltrader.data import DataRepository, Scenario
 
@@ -36,7 +35,7 @@ class CompositeDataRepository(DataRepository):
                     dr_results[i][symbol] = dr_results[i][symbol].sort_index()
                     resampled_dataframe = dr_results[i][symbol].resample(timedelta, origin=origin).sum()
 
-                    results[symbol] = pd.concat([results[symbol],resampled_dataframe], axis=1).fillna(0.0)
+                    results[symbol] = pd.concat([results[symbol], resampled_dataframe], axis=1).fillna(0.0)
 
             # FIXME: This causes weird situations when sentiments are outside the market window
             # FIXME: This might cause data loss

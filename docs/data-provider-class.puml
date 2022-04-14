@@ -10,9 +10,9 @@ class CompositeDataRepository
 
 class OHLCVDataRepository
 
-interface TickerFeedRepository
-class NewsFeedRepository
-class StockTweetsFeedRepository
+interface TickerMediaRepository
+class NewsMediaRepository
+class StockTweetsMediaRepository
 class SentimentDataRepository
 
 CompositeDataRepository -up-|> DataRepository
@@ -21,8 +21,8 @@ SentimentDataRepository -up-|> DataRepository
 
 CompositeDataRepository -up-> DataRepository
 
-TickerFeedRepository <|-- NewsFeedRepository
-TickerFeedRepository <|-- StockTweetsFeedRepository
-SentimentDataRepository --> TickerFeedRepository
+TickerMediaRepository <|-- NewsMediaRepository
+TickerMediaRepository <|-- StockTweetsMediaRepository
+SentimentDataRepository --> TickerMediaRepository
 
 @enduml

@@ -7,30 +7,29 @@ from dateutil import parser
 from retry import retry
 from transformers import PegasusTokenizer, PegasusForConditionalGeneration
 
-from drltrader.data.sentiment_data_repository import TickerFeedRepository
-from drltrader.data.sentiment_data_repository import Article
+from drltrader.media import Media, TickerMediaRepository
 
 logging.config.fileConfig('log.ini', disable_existing_loggers=False)
 logger = logging.getLogger(__name__)
 
 
-class NewsFeedRepository(TickerFeedRepository):
+class NewsMediaRepository(TickerMediaRepository):
     def __init__(self):
         self._init_summarization_model()
 
     def get_column_prefix(self):
         return 'news'
 
-    def find_articles(self, ticker: str, from_date: datetime, to_date: datetime):
+    def find_medias(self, ticker: str, from_date: datetime, to_date: datetime):
         # TODO: Filter by dates
         ticker_urls = self._search_for_ticker_news_urls(ticker)
 
         summaries = []
         for ticker_url in ticker_urls:
-            ticker_article = self._get_article_content(ticker_url)
-            ticker_article = self._summarize(ticker_article)
+            ticker_media = self._get_media_content(ticker_url)
+            ticker_media = self._summarize(ticker_media)
 
-            summaries.append(ticker_article)
+            summaries.append(ticker_media)
 
         return summaries
 
@@ -50,10 +49,14 @@ class NewsFeedRepository(TickerFeedRepository):
 
         # TODO: Hardcoded value
         exclude_list = ['maps', 'policies', 'preferences', 'accounts', 'support', 'video', 'nasdaq']
+        include_list = ['yahoo']
 
         val = []
         for url in hrefs:
-            if 'https://' in url and not any(exclude_word in url for exclude_word in exclude_list):
+            starts_with_https = 'https://' in url
+            does_not_contains_excluded_words = not any(exclude_word in url for exclude_word in exclude_list)
+            contains_included_words = any(included_word in url for included_word in include_list)
+            if starts_with_https and does_not_contains_excluded_words and contains_included_words:
                 res = re.findall(r'(https?://\S+)', url)[0].split('&')[0]
                 val.append(res)
 
@@ -62,34 +65,34 @@ class NewsFeedRepository(TickerFeedRepository):
         return list(set(val))
 
     @retry(delay=2, tries=3)
-    def _get_article_content(self, url):
+    def _get_media_content(self, url):
         logger.debug(f"Fetching {url}")
 
         r = requests.get(url)
         soup = BeautifulSoup(r.text, 'html.parser')
 
-        article_datetime = parser.parse(soup.find_all('time')[0]['datetime'])
+        media_datetime = parser.parse(soup.find_all('time')[0]['datetime'])
 
         paragraphs = soup.find_all('p')
         text = [paragraph.text for paragraph in paragraphs]
         # TODO: Hardcoded value
         words = ' '.join(text).split(' ')[:400]
-        article_content = ' '.join(words)
+        media_content = ' '.join(words)
 
-        return Article(datetime=article_datetime,
-                       url=url,
-                       content=article_content)
+        return Media(datetime=media_datetime,
+                     id=url,
+                     content=media_content)
 
-    def _summarize(self, article):
-        logger.debug(f"Summarizing {article.url}")
+    def _summarize(self, media):
+        logger.debug(f"Summarizing {media.id}")
 
         # TODO: Hardcoded Values
-        input_ids = self.tokenizer.encode(article.content, return_tensors='pt', truncation=True, max_length=512)
+        input_ids = self.tokenizer.encode(media.content, return_tensors='pt', truncation=True, max_length=512)
         output = self.model.generate(input_ids, max_length=55, num_beams=5, early_stopping=True)
-        article_summary = self.tokenizer.decode(output[0], skip_special_tokens=True)
-        article.summary = article_summary
+        media_summary = self.tokenizer.decode(output[0], skip_special_tokens=True)
+        media.summary = media_summary
 
-        return article
+        return media
 
 
 
