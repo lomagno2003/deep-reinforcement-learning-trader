@@ -49,6 +49,9 @@ class PortfolioStocksEnv(gym.Env):
         self.reset()
 
     def append_data(self, dataframe_per_symbol: dict):
+        if self.observer is not None:
+            self.observer.notify_new_data()
+
         new_dataframe_per_symbol = {}
 
         for symbol in dataframe_per_symbol:
@@ -194,6 +197,8 @@ class PortfolioStocksEnv(gym.Env):
                                              qty=source_symbol_shares,
                                              price=source_symbol_price,
                                              side=Sides.Sell))
+
+            self.observer.notify_portfolio_change(portfolio=self._portfolio_allocation)
 
         # Statistics
         allocation_details = {

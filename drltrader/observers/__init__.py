@@ -16,5 +16,12 @@ class Order:
 
 
 class Observer:
+    # TODO: This method makes low-sense
+    def notify_new_data(self):
+        pass
+
     def notify_order(self, order: Order):
+        pass
+
+    def notify_portfolio_change(self, portfolio: dict):
         pass

@@ -99,7 +99,7 @@ class Brain:
                     break
 
             logger.info("Cycle finished, sleeping")
-            time.sleep(10)
+            time.sleep(120)
 
         return info
 

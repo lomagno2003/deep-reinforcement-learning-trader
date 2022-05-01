@@ -15,10 +15,18 @@ class TelegramObserver(Observer):
         self._char_group_id = config['telegram']['chat_id']
         self._updater = Updater(token=self._telegram_token)
 
+        self.send_message_to_group(text="Bot started, waiting for portfolio updates")
+
+    def notify_new_data(self):
+        self.send_message_to_group(text="There's new data available")
+
     def notify_order(self, order: Order):
         text = f"There was an order to {order.side} {order.qty} stocks of {order.symbol}"
-        self._updater.bot.send_message(chat_id=self._char_group_id,
-                                       text=text)
+        self.send_message_to_group(text=text)
+
+    def notify_portfolio_change(self, portfolio: dict):
+        text = f"Portfolio changed to: {str(portfolio)}"
+        self.send_message_to_group(text)
 
     def start_polling(self):
         dispatcher = self._updater.dispatcher
@@ -31,4 +39,8 @@ class TelegramObserver(Observer):
     @staticmethod
     def portfolio_command(update: Update, context: CallbackContext):
         context.bot.send_message(chat_id=update.effective_chat.id, text="Not implemented yet")
+
+    def send_message_to_group(self, text: str):
+        self._updater.bot.send_message(chat_id=self._char_group_id, text=text)
+
 
