@@ -8,11 +8,6 @@ class Scenario:
                  interval: str = None,
                  symbol: str = None,
                  symbols: list = None):
-        if symbol is None and symbols is None:
-            raise ValueError("Either symbol or symbols needs to be provided")
-        if symbol is not None and symbols is not None:
-            raise ValueError("Either symbol or symbols needs to be provided, not both")
-
         self.symbol = symbol
         self.symbols = symbols
         self.start_date = start_date
@@ -22,15 +17,17 @@ class Scenario:
     def __str__(self):
         if self.symbol is not None:
             symbols_space = f"{self.symbol}"
-        else:
+        elif self.symbols is not None:
             symbols_space = "_".join(self.symbols)
+        else:
+            symbols_space = 'None'
 
         return f"{self.interval}" \
                f"_{symbols_space}" \
                f"_{self.start_date.strftime('%Y-%m-%d-%H-%M-%S')}" \
                f"_{self.end_date.strftime('%Y-%m-%d-%H-%M-%S')}"
 
-    def clone_with_symbol(self, symbol):
+    def copy_with_symbol(self, symbol):
         return Scenario(start_date=self.start_date,
                         end_date=self.end_date,
                         interval=self.interval,
@@ -49,6 +46,12 @@ class Scenario:
                         interval=interval,
                         symbol=self.symbol,
                         symbols=self.symbols)
+
+    def copy_with_symbols(self, symbols: list):
+        return Scenario(start_date=self.start_date,
+                        end_date=self.end_date,
+                        interval=self.interval,
+                        symbols=symbols)
 
     @staticmethod
     def empty_scenario():

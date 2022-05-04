@@ -9,9 +9,10 @@ from drltrader.data import Scenario
 class OHLCVDataRepositoryTestCase(unittest.TestCase):
     def test_retrieve_data(self):
         # Arrange
-        testing_scenario = Scenario(symbol='TSLA',
+        testing_scenario = Scenario(symbol='USD',
                                     start_date=datetime.now() - timedelta(days=30),
-                                    end_date=datetime.now())
+                                    end_date=datetime.now(),
+                                    interval='15m')
 
         data_repository: OHLCVDataRepository = OHLCVDataRepository()
 

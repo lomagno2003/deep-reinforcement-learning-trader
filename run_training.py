@@ -14,7 +14,6 @@ logger = logging.getLogger(__name__)
 
 class TrainingRunner:
     def __init__(self):
-        self._symbols = ['SPY', 'TDOC', 'ETSY', 'MELI', 'SE', 'SQ', 'DIS', 'TSLA', 'AAPL', 'MSFT', 'SHOP']
         self._initiate_scenarios()
         self._initiate_training_configuration()
 
@@ -38,20 +37,18 @@ class TrainingRunner:
 
     def _initiate_scenarios(self):
         # FIXME: YahooFinance only support 60 days of intraday data
-        self._training_scenarios = [Scenario(symbols=self._symbols,
-                                             start_date=datetime.now() - timedelta(days=60),
+        self._training_scenarios = [Scenario(start_date=datetime.now() - timedelta(days=60),
                                              end_date=datetime.now() - timedelta(days=10))]
-        self._testing_scenarios = [Scenario(symbols=self._symbols,
-                                            start_date=datetime.now() - timedelta(days=10),
+        self._testing_scenarios = [Scenario(start_date=datetime.now() - timedelta(days=10),
                                             end_date=datetime.now())]
 
     def _initiate_training_configuration(self):
         self._training_configuration = TrainingConfiguration(training_scenarios=self._training_scenarios,
                                                              testing_scenarios=self._testing_scenarios,
-                                                             generations=10,
-                                                             start_population=50,
+                                                             generations=50,
+                                                             start_population=30,
                                                              stop_population=10,
-                                                             step_population=-5,
+                                                             step_population=-1,
                                                              start_timesteps=1000,
                                                              stop_timesteps=50000,
                                                              step_timesteps=1000,

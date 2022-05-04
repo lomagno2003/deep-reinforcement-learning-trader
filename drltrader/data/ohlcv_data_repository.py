@@ -24,7 +24,7 @@ class OHLCVDataRepository(DataRepository):
         intersection_index = None
 
         for symbol in scenario.symbols:
-            dataframe_per_symbol[symbol] = self.retrieve_data(scenario.clone_with_symbol(symbol))
+            dataframe_per_symbol[symbol] = self.retrieve_data(scenario.copy_with_symbol(symbol))
 
             if intersection_index is None:
                 intersection_index = dataframe_per_symbol[symbol].index

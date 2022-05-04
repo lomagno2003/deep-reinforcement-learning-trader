@@ -53,13 +53,18 @@ class EvolutionaryTrainer:
     # FIXME: We can't go over 1d since it triggers bug on portfolio_stocks_env#L175
     INTERVALS = ['5m', '15m', '30m', '60m', '90m']
 
+    INDICATOR_GENE_ACTIVATION_THRESHOLD = 0.8
+    SYMBOL_GENE_ACTIVATION_THRESHOLD = 0.8
+
+    SYMBOLS = ['TDOC', 'ETSY', 'MELI', 'SE', 'SQ', 'DIS', 'TSLA', 'AAPL', 'MSFT', 'SHOP']
+
     FIRST_LAYER_SIZE_GENE_IDX = 0
     SECOND_LAYER_SIZE_GENE_IDX = 1
     WINDOW_SIZE_GENE_IDX = 2
     USE_NORMALIZED_OBS_GENE_IDX = 3
     INTERVAL_GENE_IDX = 4
-    FIRST_INDICATOR_GENE_IDX = 5
-    INDICATOR_GENE_ACTIVATION_THRESHOLD = 0.8
+    DYNAMIC_CONFIGURATIONS_GENE_IDX = 5
+
 
     INSTANCE = None
 
@@ -89,7 +94,9 @@ class EvolutionaryTrainer:
         return EvolutionaryTrainer._get_brain_configuration_from_dna(self, self.genetic_algorithm.best_solutions[0])
 
     def _initialize_genetic_algorithm(self):
-        genes = len(self.data_repository.get_columns_per_symbol()) + EvolutionaryTrainer.FIRST_INDICATOR_GENE_IDX
+        genes = len(self.data_repository.get_columns_per_symbol()) \
+                + EvolutionaryTrainer.DYNAMIC_CONFIGURATIONS_GENE_IDX \
+                + len(EvolutionaryTrainer.SYMBOLS)
         self.genetic_algorithm = pygad.GA(num_generations=self.training_configuration.generations,
                                           num_genes=genes,
                                           init_range_low=0.0,
@@ -157,6 +164,7 @@ class EvolutionaryTrainer:
                                  brain_configuration=brain_configuration)
 
             for training_scenario in trainer.training_configuration.training_scenarios:
+                # FIXME: Since the scenario might not have Symbols nor Interval, it prints "None_None"
                 logger.info(f"Training on scenario {training_scenario} with {trainer.current_timesteps} timesteps")
                 brain.learn(training_scenario=training_scenario,
                             total_timesteps=trainer.current_timesteps)
@@ -211,19 +219,31 @@ class EvolutionaryTrainer:
         signal_feature_names = []
 
         for indicator_idx in range(0, len(trainer.data_repository.get_columns_per_symbol())):
-            if dna[EvolutionaryTrainer.FIRST_INDICATOR_GENE_IDX + indicator_idx] > \
+            if dna[EvolutionaryTrainer.DYNAMIC_CONFIGURATIONS_GENE_IDX + indicator_idx] > \
                     EvolutionaryTrainer.INDICATOR_GENE_ACTIVATION_THRESHOLD:
                 selected_feature = trainer.data_repository.get_columns_per_symbol()[indicator_idx]
 
                 if selected_feature not in EvolutionaryTrainer.EXCLUDED_COLUMNS:
                     signal_feature_names.append(selected_feature)
 
+        symbols_gene_start_idx = EvolutionaryTrainer.DYNAMIC_CONFIGURATIONS_GENE_IDX \
+                                 + len(trainer.data_repository.get_columns_per_symbol()) - 1
+
+        # FIXME: Hardcoded value
+        symbols = ['SPY']
+
+        for symbol_idx in range(0, len(EvolutionaryTrainer.SYMBOLS)):
+            if dna[symbols_gene_start_idx + symbol_idx] > \
+                    EvolutionaryTrainer.SYMBOL_GENE_ACTIVATION_THRESHOLD:
+                symbols.append(EvolutionaryTrainer.SYMBOLS[symbol_idx])
+
         return BrainConfiguration(first_layer_size=first_layer_size,
                                   second_layer_size=second_layer_size,
                                   window_size=window_size,
                                   signal_feature_names=signal_feature_names,
                                   use_normalized_observations=use_normalized_observations,
-                                  interval=interval)
+                                  interval=interval,
+                                  symbols=symbols)
 
     @staticmethod
     def _calculate_value(min, max, gene_idx, dna):

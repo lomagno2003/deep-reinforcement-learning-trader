@@ -24,15 +24,12 @@ class BrainRunner:
     def run_brain():
         # Load Brain
         logger.info("Loading brain")
-        symbols = ['SPY', 'TDOC', 'ETSY', 'MELI', 'SE', 'SQ', 'DIS', 'TSLA', 'AAPL', 'MSFT', 'SHOP']
 
         brain: Brain = BrainRepositoryFile().load("best_brain")
 
         # Start Observing
         logger.info("Starting observation")
-        start_date = datetime.now() - timedelta(days=30)
-        observation_scenario: Scenario = Scenario(symbols=symbols,
-                                                  start_date=start_date)
+        observation_scenario: Scenario = Scenario(start_date=datetime.now() - timedelta(days=30))
         brain.start_observing(scenario=observation_scenario,
                               observer=SafeObserver(CompositeObserver([AlpacaObserver(), TelegramObserver()])))
 
