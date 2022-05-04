@@ -5,7 +5,7 @@ class Scenario:
     def __init__(self,
                  start_date: datetime,
                  end_date: datetime = None,
-                 interval: str = '5m',
+                 interval: str = None,
                  symbol: str = None,
                  symbols: list = None):
         if symbol is None and symbols is None:
@@ -47,7 +47,8 @@ class Scenario:
     def empty_scenario():
         return Scenario(symbols=['FOO'],
                         start_date=datetime.fromtimestamp(0),
-                        end_date=datetime.fromtimestamp(0))
+                        end_date=datetime.fromtimestamp(0),
+                        interval='5m')
 
 
 class DataRepository:

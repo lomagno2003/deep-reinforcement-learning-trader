@@ -50,11 +50,14 @@ class EvolutionaryTrainer:
     MAX_WINDOW_SIZE = 30
     MIN_WINDOW_SIZE = 1
 
+    INTERVALS = ['5m', '15m', '30m', '60m', '90m', '1h', '1d']
+
     FIRST_LAYER_SIZE_GENE_IDX = 0
     SECOND_LAYER_SIZE_GENE_IDX = 1
     WINDOW_SIZE_GENE_IDX = 2
     USE_NORMALIZED_OBS_GENE_IDX = 3
-    FIRST_INDICATOR_GENE_IDX = 4
+    INTERVAL_GENE_IDX = 4
+    FIRST_INDICATOR_GENE_IDX = 5
     INDICATOR_GENE_ACTIVATION_THRESHOLD = 0.8
 
     INSTANCE = None
@@ -201,6 +204,9 @@ class EvolutionaryTrainer:
 
         use_normalized_observations = True if dna[EvolutionaryTrainer.USE_NORMALIZED_OBS_GENE_IDX] > 0.5 else False
 
+        interval_idx = int(len(EvolutionaryTrainer.INTERVALS) * dna[EvolutionaryTrainer.INTERVAL_GENE_IDX])
+        interval = EvolutionaryTrainer.INTERVALS[interval_idx]
+
         signal_feature_names = []
 
         for indicator_idx in range(0, len(trainer.data_repository.get_columns_per_symbol())):
@@ -215,7 +221,8 @@ class EvolutionaryTrainer:
                                   second_layer_size=second_layer_size,
                                   window_size=window_size,
                                   signal_feature_names=signal_feature_names,
-                                  use_normalized_observations=use_normalized_observations)
+                                  use_normalized_observations=use_normalized_observations,
+                                  interval=interval)
 
     @staticmethod
     def _calculate_value(min, max, gene_idx, dna):

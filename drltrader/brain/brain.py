@@ -27,13 +27,15 @@ class BrainConfiguration:
                  window_size: int = 3,
                  prices_feature_name: str = 'Low',
                  signal_feature_names: list = ['Low', 'Volume'],
-                 use_normalized_observations: bool = True):
+                 use_normalized_observations: bool = True,
+                 interval: str = '15m'):
         self.first_layer_size = first_layer_size
         self.second_layer_size = second_layer_size
         self.window_size = window_size
         self.prices_feature_name = prices_feature_name
         self.use_normalized_observations = use_normalized_observations
         self.signal_feature_names = signal_feature_names
+        self.interval = interval
 
     def __str__(self):
         return json.dumps(self.__dict__)
@@ -143,6 +145,10 @@ class Brain:
         return internal_environment, environment, info[0]
 
     def _build_environment(self, scenario: Scenario):
+        if scenario.interval is not None:
+            logger.warning(f"Scenario already has an interval, overriding it with {self._brain_configuration.interval}")
+        scenario.interval = self._brain_configuration.interval
+
         env = None
         if scenario.symbols is not None:
             env = self._build_portfolio_stock_scenario(scenario)

@@ -7,6 +7,7 @@ from flask import Flask
 
 from drltrader.brain.brain import Brain
 from drltrader.brain.brain_repository_file import BrainRepositoryFile
+from drltrader.observers.simple_observer import SafeObserver
 from drltrader.observers.simple_observer import CompositeObserver
 from drltrader.observers.alpaca_observer import AlpacaObserver
 from drltrader.observers.telegram_observer import TelegramObserver
@@ -31,10 +32,9 @@ class BrainRunner:
         logger.info("Starting observation")
         start_date = datetime.now() - timedelta(days=30)
         observation_scenario: Scenario = Scenario(symbols=symbols,
-                                                  start_date=start_date,
-                                                  interval='1h')
+                                                  start_date=start_date)
         brain.start_observing(scenario=observation_scenario,
-                              observer=CompositeObserver([AlpacaObserver(), TelegramObserver()]))
+                              observer=SafeObserver(CompositeObserver([AlpacaObserver(), TelegramObserver()])))
 
         logger.info("Finish observation")
 

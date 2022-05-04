@@ -1,4 +1,11 @@
+import logging
+import logging.config
+import traceback
+
 from drltrader.observers import Observer, Order
+
+logging.config.fileConfig('log.ini', disable_existing_loggers=False)
+logger = logging.getLogger(__name__)
 
 
 class PrintEnvObserver(Observer):
@@ -46,3 +53,26 @@ class CompositeObserver(Observer):
     def notify_portfolio_change(self, portfolio: dict):
         for observer in self._observers:
             observer.notify_portfolio_change(portfolio)
+
+
+class SafeObserver(Observer):
+    def __init__(self, observer: Observer):
+        self._observer = observer
+
+    def notify_new_data(self):
+        try:
+            self._observer.notify_new_data()
+        except:
+            logging.warning(traceback.format_exc())
+
+    def notify_order(self, order: Order):
+        try:
+            self._observer.notify_order(order)
+        except:
+            logging.warning(traceback.format_exc())
+
+    def notify_portfolio_change(self, portfolio: dict):
+        try:
+            self._observer.notify_portfolio_change(portfolio)
+        except:
+            logging.warning(traceback.format_exc())

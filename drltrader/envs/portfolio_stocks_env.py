@@ -1,10 +1,15 @@
 import gym
 import numpy as np
 import pandas as pd
+import logging
+import logging.config
 from gym import spaces
 import matplotlib.pyplot as plt
 
 from drltrader.observers import Order, Sides
+
+logging.config.fileConfig('log.ini', disable_existing_loggers=False)
+logger = logging.getLogger(__name__)
 
 
 class PortfolioStocksEnv(gym.Env):
@@ -63,6 +68,9 @@ class PortfolioStocksEnv(gym.Env):
         self._process_dataframe_per_symbol()
 
         self._done = self._current_tick >= self._frame_bound[1]
+
+        if not self._done:
+            logger.info("New data was added and the brain can check it out")
 
     def step(self, action):
         if self._done:

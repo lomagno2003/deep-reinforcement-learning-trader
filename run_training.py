@@ -5,7 +5,6 @@ from datetime import timedelta
 
 from drltrader.brain.brain import Brain, BrainConfiguration
 from drltrader.brain.brain_repository_file import BrainRepositoryFile
-from drltrader.data.ohlcv_data_repository import OHLCVDataRepository
 from drltrader.data import Scenario
 from drltrader.trainer.evolutionary_trainer import EvolutionaryTrainer, TrainingConfiguration
 
@@ -39,24 +38,22 @@ class TrainingRunner:
 
     def _initiate_scenarios(self):
         self._training_scenarios = [Scenario(symbols=self._symbols,
-                                             interval='1h',
                                              start_date=datetime.now() - timedelta(days=60),
                                              end_date=datetime.now() - timedelta(days=10))]
         self._testing_scenarios = [Scenario(symbols=self._symbols,
-                                            interval='1h',
                                             start_date=datetime.now() - timedelta(days=10),
                                             end_date=datetime.now())]
 
     def _initiate_training_configuration(self):
         self._training_configuration = TrainingConfiguration(training_scenarios=self._training_scenarios,
                                                              testing_scenarios=self._testing_scenarios,
-                                                             generations=50,
+                                                             generations=10,
                                                              start_population=50,
                                                              stop_population=10,
-                                                             step_population=-1,
+                                                             step_population=-5,
                                                              start_timesteps=1000,
                                                              stop_timesteps=50000,
-                                                             step_timesteps=500,
+                                                             step_timesteps=1000,
                                                              solutions_statistics_filename='logs/solutions.csv')
 
 
