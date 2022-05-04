@@ -50,7 +50,8 @@ class EvolutionaryTrainer:
     MAX_WINDOW_SIZE = 30
     MIN_WINDOW_SIZE = 1
 
-    INTERVALS = ['5m', '15m', '30m', '60m', '90m', '1h', '1d']
+    # FIXME: We can't go over 1d since it triggers bug on portfolio_stocks_env#L175
+    INTERVALS = ['5m', '15m', '30m', '60m', '90m']
 
     FIRST_LAYER_SIZE_GENE_IDX = 0
     SECOND_LAYER_SIZE_GENE_IDX = 1

@@ -43,6 +43,13 @@ class Scenario:
                         symbol=self.symbol,
                         symbols=self.symbols)
 
+    def copy_with_interval(self, interval: str):
+        return Scenario(start_date=self.start_date,
+                        end_date=self.end_date,
+                        interval=interval,
+                        symbol=self.symbol,
+                        symbols=self.symbols)
+
     @staticmethod
     def empty_scenario():
         return Scenario(symbols=['FOO'],

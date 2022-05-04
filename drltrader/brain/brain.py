@@ -147,7 +147,7 @@ class Brain:
     def _build_environment(self, scenario: Scenario):
         if scenario.interval is not None:
             logger.warning(f"Scenario already has an interval, overriding it with {self._brain_configuration.interval}")
-        scenario.interval = self._brain_configuration.interval
+        scenario = scenario.copy_with_interval(self._brain_configuration.interval)
 
         env = None
         if scenario.symbols is not None:

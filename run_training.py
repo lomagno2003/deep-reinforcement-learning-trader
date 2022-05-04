@@ -37,6 +37,7 @@ class TrainingRunner:
         self._brain_repository.save("best_brain", best_brain, override=True)
 
     def _initiate_scenarios(self):
+        # FIXME: YahooFinance only support 60 days of intraday data
         self._training_scenarios = [Scenario(symbols=self._symbols,
                                              start_date=datetime.now() - timedelta(days=60),
                                              end_date=datetime.now() - timedelta(days=10))]

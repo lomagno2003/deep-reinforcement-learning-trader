@@ -172,6 +172,8 @@ class PortfolioStocksEnv(gym.Env):
             prices_per_symbol[symbol] = symbol_dataframe[self._prices_feature_name].to_numpy()
             signal_features_per_symbol[symbol] = symbol_dataframe.loc[:, self._signal_feature_names].to_numpy()[start:end]
 
+        # FIXME: If prices_per_symbol[ANY] <  self._window_size, the model will fail since
+        #  observation < observation_space
         self._timestamps = timestamps
         self._prices_per_symbol = prices_per_symbol
         self._signal_features_per_symbol = signal_features_per_symbol
