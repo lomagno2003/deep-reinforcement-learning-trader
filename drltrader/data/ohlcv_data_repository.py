@@ -1,9 +1,11 @@
 import yfinance as yf
-import pandas as pd
 from datetime import datetime
 import logging
 import logging.config
-from finta import TA
+
+import alpaca_trade_api as tradeapi
+from alpaca_trade_api.rest import TimeFrame, TimeFrameUnit
+import json
 
 from drltrader.data import DataRepository, Scenario
 
@@ -50,14 +52,73 @@ class OHLCVDataRepository(DataRepository):
             if self._cache_enabled:
                 self._cache[str(scenario)] = df
 
-            # FIXME: There's some weird bug on Yahoo
-            df = df.iloc[:-1, :]
+            df.index = df.index.tz_convert('GMT')
 
             return df
 
-    def _fetch_data(self, scenario):
+    def _fetch_data(self, scenario: Scenario):
+        raise NotImplementedError()
+
+
+class YahooOHLCVDataRepository(OHLCVDataRepository):
+    def _fetch_data(self, scenario: Scenario):
         ticker = yf.Ticker(scenario.symbol)
         df = ticker.history(start=scenario.start_date,
                             end=scenario.end_date,
                             interval=scenario.interval)
+
+        # FIXME: There's some weird bug on Yahoo
+        df = df.iloc[:-1, :]
+
+        df = df[['Open', 'High', 'Low', 'Close', 'Volume']]
+
         return df
+
+
+class AlpacaOHLCVDataRepository(OHLCVDataRepository):
+    def __init__(self,
+                 cache_enabled: bool = True,
+                 config_file_name: str = 'config.json'):
+        super().__init__(cache_enabled=cache_enabled)
+
+        with open(config_file_name) as config_file:
+            config = json.load(config_file)
+
+        self._alpaca_key = config['alpaca']['key']
+        self._alpaca_secret = config['alpaca']['secret']
+        self._alpaca_url = config['alpaca']['url']
+
+        self._alpaca_api = tradeapi.REST(self._alpaca_key,
+                                         self._alpaca_secret,
+                                         self._alpaca_url,
+                                         api_version='v2')
+
+    def _fetch_data(self, scenario: Scenario):
+        timeframe = AlpacaOHLCVDataRepository.convert_str_interval_to_timeframe(scenario.interval)
+        start_date_str = f"{scenario.start_date.isoformat()}+00:00"
+        end_date_str = f"{scenario.end_date.isoformat()}+00:00"
+        data = self._alpaca_api.get_bars(symbol=scenario.symbol,
+                                         timeframe=timeframe,
+                                         start=start_date_str,
+                                         end=end_date_str)
+        df = data.df
+        df = df.rename(columns={"open": "Open",
+                                "high": "High",
+                                "low": "Low",
+                                "close": "Close",
+                                "volume": "Volume"})
+
+        df = df[['Open', 'High', 'Low', 'Close', 'Volume']]
+
+        return df
+
+    @staticmethod
+    def convert_str_interval_to_timeframe(str_interval: str):
+        return {
+            '1m': TimeFrame(1, TimeFrameUnit.Minute),
+            '5m': TimeFrame(5, TimeFrameUnit.Minute),
+            '15m': TimeFrame(15, TimeFrameUnit.Minute),
+            '30m': TimeFrame(30, TimeFrameUnit.Minute),
+            '1h': TimeFrame(1, TimeFrameUnit.Hour),
+            '1d': TimeFrame(1, TimeFrameUnit.Day),
+        }[str_interval]
