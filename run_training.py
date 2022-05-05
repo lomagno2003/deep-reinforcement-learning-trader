@@ -6,6 +6,8 @@ from datetime import timedelta
 from drltrader.brain.brain import Brain, BrainConfiguration
 from drltrader.brain.brain_repository_file import BrainRepositoryFile
 from drltrader.data import Scenario
+from drltrader.data.ohlcv_data_repository import OHLCVDataRepository
+from drltrader.data.indicators_data_repository import IndicatorsDataRepository
 from drltrader.trainer.evolutionary_trainer import EvolutionaryTrainer, TrainingConfiguration
 
 logging.config.fileConfig('log.ini', disable_existing_loggers=False)
@@ -18,6 +20,7 @@ class TrainingRunner:
         self._initiate_training_configuration()
 
         self._brain_repository = BrainRepositoryFile()
+        self._data_repository = IndicatorsDataRepository(OHLCVDataRepository())
 
     def run(self):
         # Find best brain configuration
@@ -46,8 +49,8 @@ class TrainingRunner:
         self._training_configuration = TrainingConfiguration(training_scenarios=self._training_scenarios,
                                                              testing_scenarios=self._testing_scenarios,
                                                              generations=50,
-                                                             start_population=30,
-                                                             stop_population=10,
+                                                             start_population=20,
+                                                             stop_population=8,
                                                              step_population=-1,
                                                              start_timesteps=1000,
                                                              stop_timesteps=50000,

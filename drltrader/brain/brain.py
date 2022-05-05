@@ -75,6 +75,7 @@ class Brain:
         return info
 
     def start_observing(self, scenario: Scenario, observer: Observer = None):
+        scenario = self._build_scenario(scenario)
         # TODO: This is done only for PortfolioStocksEnv
         # TODO: Validate that scenario is without end_date
         internal_environment, environment, info = self._analyze_scenario(scenario, render=False)
@@ -146,7 +147,7 @@ class Brain:
 
         return internal_environment, environment, info[0]
 
-    def _build_environment(self, scenario: Scenario):
+    def _build_scenario(self, scenario: Scenario):
         if scenario.interval is not None:
             logger.warning(f"Scenario already has an interval, overriding it with {self._brain_configuration.interval}")
         scenario = scenario.copy_with_interval(self._brain_configuration.interval)
@@ -154,6 +155,11 @@ class Brain:
         if scenario.symbols is not None:
             logger.warning(f"Scenario already has symbols, overriding it with {self._brain_configuration.symbols}")
         scenario = scenario.copy_with_symbols(self._brain_configuration.symbols)
+
+        return scenario
+
+    def _build_environment(self, scenario: Scenario):
+        scenario = self._build_scenario(scenario)
 
         env = None
         if scenario.symbols is not None:
