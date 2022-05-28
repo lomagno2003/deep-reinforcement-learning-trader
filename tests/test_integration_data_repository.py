@@ -10,7 +10,7 @@ from drltrader.media.cached_media_repository import CachedMediaRepository
 from drltrader.media.twitter_media_repository import TwitterMediaRepository
 from drltrader.data.composite_data_repository import CompositeDataRepository
 from drltrader.data.indicators_data_repository import IndicatorsDataRepository
-from drltrader.data.ohlcv_data_repository import OHLCVDataRepository
+from drltrader.data.ohlcv_data_repository import AlpacaOHLCVDataRepository
 from drltrader.data import DataRepository, Scenario
 
 
@@ -30,7 +30,7 @@ class DataRepositoryIntegrationTestCase(unittest.TestCase):
 
         data_repository: DataRepository = IndicatorsDataRepository(
             CompositeDataRepository([
-                OHLCVDataRepository(),
+                AlpacaOHLCVDataRepository(),
                 SentimentDataRepository(news_media_repository),
                 SentimentDataRepository(twitter_media_repository)
             ])

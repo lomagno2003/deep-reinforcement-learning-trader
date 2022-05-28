@@ -5,9 +5,8 @@ import logging.config
 
 from drltrader.brain.brain import BrainConfiguration
 from drltrader.brain.brain import Brain
-from drltrader.data import DataRepository, Scenario
 from drltrader.data import DataRepository
-from drltrader.data.ohlcv_data_repository import OHLCVDataRepository
+from drltrader.data.ohlcv_data_repository import AlpacaOHLCVDataRepository
 from drltrader.data.indicators_data_repository import IndicatorsDataRepository
 
 logging.config.fileConfig('log.ini', disable_existing_loggers=False)
@@ -17,7 +16,7 @@ logger = logging.getLogger(__name__)
 class TrainingConfiguration:
     def __init__(self,
                  training_scenarios: list,
-                 testing_scenarios: list,
+                 validation_scenarios: list,
                  generations: int = 2,
                  start_population: int = 6,
                  stop_population: int = 4,
@@ -27,7 +26,7 @@ class TrainingConfiguration:
                  step_timesteps: int = 500,
                  solutions_statistics_filename: str = None):
         self.training_scenarios = training_scenarios
-        self.testing_scenarios = testing_scenarios
+        self.validation_scenarios = validation_scenarios
 
         self.generations = generations
 
@@ -51,7 +50,7 @@ class EvolutionaryTrainer:
     MIN_WINDOW_SIZE = 1
 
     # FIXME: We can't go over 1d since it triggers bug on portfolio_stocks_env#L175
-    INTERVALS = ['5m', '15m', '30m', '60m', '90m']
+    INTERVALS = ['5m', '15m', '30m', '1h']
 
     INDICATOR_GENE_ACTIVATION_THRESHOLD = 0.8
     SYMBOL_GENE_ACTIVATION_THRESHOLD = 0.5
@@ -67,7 +66,7 @@ class EvolutionaryTrainer:
 
     INSTANCE = None
 
-    def __init__(self, data_repository: DataRepository = IndicatorsDataRepository(OHLCVDataRepository())):
+    def __init__(self, data_repository: DataRepository = IndicatorsDataRepository(AlpacaOHLCVDataRepository())):
         if EvolutionaryTrainer.INSTANCE is not None:
             raise ValueError("There can be only one instance of Trainer")
 
@@ -170,14 +169,14 @@ class EvolutionaryTrainer:
                 logger.info(f"Training finished")
 
             mean_testing_profit = 0.0
-            for testing_scenario in trainer.training_configuration.testing_scenarios:
-                logger.info(f"Testing on scenario {testing_scenario}")
-                info = brain.evaluate(testing_scenario=testing_scenario)
+            for validation_scenario in trainer.training_configuration.validation_scenarios:
+                logger.info(f"Testing on scenario {validation_scenario}")
+                info = brain.evaluate(testing_scenario=validation_scenario)
                 profit = info['total_profit'] if 'total_profit' in info else info['current_profit']
                 logger.info(f"Testing finished with profit {profit}")
                 mean_testing_profit += profit
 
-            mean_testing_profit = mean_testing_profit / len(trainer.training_configuration.testing_scenarios)
+            mean_testing_profit = mean_testing_profit / len(trainer.training_configuration.validation_scenarios)
 
             trainer.solutions_statistics.at[solution_name, 'Profit'] = mean_testing_profit
             trainer.solutions_statistics.at[solution_name, 'Brain Configuration'] = brain_configuration
