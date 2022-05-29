@@ -9,6 +9,7 @@ from drltrader.brain.brain import Brain, BrainConfiguration
 from drltrader.brain.brain_repository_file import BrainRepositoryFile
 from drltrader.data import Scenario
 from drltrader.data.ohlcv_data_repository import AlpacaOHLCVDataRepository
+from drltrader.data.cached_data_repository import CachedDataRepository
 from drltrader.data.indicators_data_repository import IndicatorsDataRepository
 from drltrader.trainer.evolutionary_trainer import EvolutionaryTrainer, TrainingConfiguration
 
@@ -18,13 +19,10 @@ logger = logging.getLogger(__name__)
 
 class TrainingBenchmarker:
     def __init__(self):
-        self._initiate_scenarios()
-        self._initiate_training_configuration()
-
         self._brain_repository = BrainRepositoryFile()
-        self._data_repository = IndicatorsDataRepository(AlpacaOHLCVDataRepository())
+        self._data_repository = CachedDataRepository(IndicatorsDataRepository(AlpacaOHLCVDataRepository()))
 
-        self._trainer: EvolutionaryTrainer = EvolutionaryTrainer()
+        self._trainer: EvolutionaryTrainer = EvolutionaryTrainer(data_repository=self._data_repository)
 
     def run(self):
         root_datetime = datetime.now()
@@ -43,6 +41,8 @@ class TrainingBenchmarker:
         # Find best brain configuration
         logger.info("Finding best brain configuration")
         self._initiate_scenarios(ref_datetime=ref_datetime)
+        self._initiate_training_configuration()
+
         best_brain_configuration: BrainConfiguration = self._trainer.train(self._training_configuration)
 
         # Train brain
@@ -85,7 +85,7 @@ class TrainingBenchmarker:
                                                  market_open_hour,
                                                  est_timezone)
 
-        testing_end_date = datetime.combine(datetime.now() + relativedelta(weekday=SA(-1)) - timedelta(days=1),
+        testing_end_date = datetime.combine(ref_datetime + relativedelta(weekday=SA(-1)) - timedelta(days=1),
                                             market_close_hour,
                                             est_timezone)
         testing_start_date = datetime.combine(testing_end_date + relativedelta(weekday=MO(-1)),
@@ -99,8 +99,8 @@ class TrainingBenchmarker:
     def _initiate_training_configuration(self):
         self._training_configuration = TrainingConfiguration(training_scenarios=self._training_scenarios,
                                                              validation_scenarios=self._validation_scenarios,
-                                                             generations=5,
-                                                             start_population=10,
+                                                             generations=6,
+                                                             start_population=8,
                                                              stop_population=4,
                                                              step_population=-2,
                                                              start_timesteps=5000,

@@ -9,6 +9,20 @@ class CompositeDataRepository(DataRepository):
     def __init__(self, data_repositories: list):
         self._data_repositories = data_repositories
 
+    def get_repository_name(self):
+        repository_name = "Composite("
+        first = True
+
+        for data_repository in self._data_repositories:
+            if first:
+                repository_name += f"{data_repository.repository_name}"
+            else:
+                repository_name += f", {data_repository.repository_name}"
+
+        repository_name += ")"
+
+        return repository_name
+
     def retrieve_datas(self, scenario: Scenario):
         dr_results = []
 

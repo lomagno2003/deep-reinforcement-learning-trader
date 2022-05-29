@@ -23,6 +23,9 @@ class OHLCVDataRepository(DataRepository):
         self._cache = {}
         self._cache_enabled = cache_enabled
 
+    def get_repository_name(self):
+        return "OHLCV"
+
     def retrieve_datas(self, scenario: Scenario):
         dataframe_per_symbol = {}
 

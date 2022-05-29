@@ -27,7 +27,7 @@ class TrainingRunner:
     def run(self):
         # Find best brain configuration
         logger.info("Finding best brain configuration")
-        trainer: EvolutionaryTrainer = EvolutionaryTrainer()
+        trainer: EvolutionaryTrainer = EvolutionaryTrainer(data_repository=self._data_repository)
         best_brain_configuration: BrainConfiguration = trainer.train(self._training_configuration)
 
         # Train brain

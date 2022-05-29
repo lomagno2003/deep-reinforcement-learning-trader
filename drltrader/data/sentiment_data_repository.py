@@ -14,6 +14,9 @@ class SentimentDataRepository(DataRepository):
         self._ticker_media_repository = ticker_media_repository
         self._sentiment_analysis_pipeline = pipeline('sentiment-analysis')
 
+    def get_repository_name(self):
+        return f"Sentiment({self._ticker_media_repository.get_column_prefix()})_"
+
     def retrieve_datas(self, scenario: Scenario):
         logger.info(f"Retrieving sentiment for scenario {scenario}")
 

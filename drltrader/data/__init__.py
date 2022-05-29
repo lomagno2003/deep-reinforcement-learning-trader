@@ -65,6 +65,9 @@ class DataRepository:
     def retrieve_datas(self, scenario: Scenario):
         pass
 
+    def get_repository_name(self):
+        pass
+
     def get_columns_per_symbol(self):
         empty_dataframe = next(iter(self.retrieve_datas(Scenario.empty_scenario()).values()))
 
