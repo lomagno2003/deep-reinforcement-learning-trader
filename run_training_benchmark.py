@@ -16,7 +16,7 @@ logging.config.fileConfig('log.ini', disable_existing_loggers=False)
 logger = logging.getLogger(__name__)
 
 
-class TrainingRunner:
+class TrainingBenchmarker:
     def __init__(self):
         self._initiate_scenarios()
         self._initiate_training_configuration()
@@ -24,17 +24,32 @@ class TrainingRunner:
         self._brain_repository = BrainRepositoryFile()
         self._data_repository = IndicatorsDataRepository(AlpacaOHLCVDataRepository())
 
+        self._trainer: EvolutionaryTrainer = EvolutionaryTrainer()
+
     def run(self):
+        root_datetime = datetime.now()
+        testing_weeks = 20
+        testing_profits = []
+
+        for week in range(testing_weeks):
+            weeks_offset = testing_weeks - week - 1
+            ref_datetime = root_datetime - timedelta(weeks=weeks_offset)
+            testing_start_date, testing_end_date, testing_profit = self.train_on_datetime(ref_datetime=ref_datetime)
+            testing_profits.append(f"{testing_start_date}->{testing_end_date}: {testing_profit}")
+
+            logger.info(f"Current list of profits: {testing_profits}")
+
+    def train_on_datetime(self, ref_datetime: datetime):
         # Find best brain configuration
         logger.info("Finding best brain configuration")
-        trainer: EvolutionaryTrainer = EvolutionaryTrainer()
-        best_brain_configuration: BrainConfiguration = trainer.train(self._training_configuration)
+        self._initiate_scenarios(ref_datetime=ref_datetime)
+        best_brain_configuration: BrainConfiguration = self._trainer.train(self._training_configuration)
 
         # Train brain
         logger.info("Training best brain")
         best_brain = Brain(data_repository=self._data_repository,
                            brain_configuration=best_brain_configuration)
-        best_brain.learn(self._training_scenarios[0], total_timesteps=10000)
+        best_brain.learn(self._training_scenarios[0], total_timesteps=20000)
 
         # Save brain
         logger.info("Saving best brain")
@@ -44,23 +59,26 @@ class TrainingRunner:
         for testing_scenario in self._testing_scenarios:
             logger.info(f"Testing brain on scenario {testing_scenario}")
             testing_scenario = testing_scenario.copy_with_symbols(best_brain_configuration.symbols)
+
             info = best_brain.evaluate(testing_scenario=testing_scenario)
             profit = info['total_profit'] if 'total_profit' in info else info['current_profit']
-            logger.info(f"The profit on the testing scenario {testing_scenario} is {profit}")
 
-    def _initiate_scenarios(self):
+            logger.info(f"The profit on the testing scenario {testing_scenario} is {profit}")
+            return testing_scenario.start_date, testing_scenario.end_date, profit
+
+    def _initiate_scenarios(self, ref_datetime: datetime = datetime.now()):
         est_timezone = timezone('EST')
         market_open_hour = time(hour=9, minute=30)
         market_close_hour = time(hour=16, minute=00)
 
-        training_end_date = datetime.combine(datetime.now() - timedelta(weeks=2) + relativedelta(weekday=SA(-1)) - timedelta(days=1),
+        training_end_date = datetime.combine(ref_datetime - timedelta(weeks=2) + relativedelta(weekday=SA(-1)) - timedelta(days=1),
                                              market_close_hour,
                                              est_timezone)
         training_start_date = datetime.combine(training_end_date - timedelta(weeks=3) + relativedelta(weekday=MO(-1)),
                                                market_open_hour,
                                                est_timezone)
 
-        validation_end_date = datetime.combine(datetime.now() - timedelta(weeks=1) + relativedelta(weekday=SA(-1)) - timedelta(days=1),
+        validation_end_date = datetime.combine(ref_datetime - timedelta(weeks=1) + relativedelta(weekday=SA(-1)) - timedelta(days=1),
                                                market_close_hour,
                                                est_timezone)
         validation_start_date = datetime.combine(validation_end_date + relativedelta(weekday=MO(-1)),
@@ -81,9 +99,9 @@ class TrainingRunner:
     def _initiate_training_configuration(self):
         self._training_configuration = TrainingConfiguration(training_scenarios=self._training_scenarios,
                                                              validation_scenarios=self._validation_scenarios,
-                                                             generations=0,
+                                                             generations=5,
                                                              start_population=10,
-                                                             stop_population=10,
+                                                             stop_population=4,
                                                              step_population=-2,
                                                              start_timesteps=5000,
                                                              stop_timesteps=10000,
@@ -92,6 +110,6 @@ class TrainingRunner:
 
 
 if __name__ == '__main__':
-    training_runner: TrainingRunner = TrainingRunner()
+    training_runner: TrainingBenchmarker = TrainingBenchmarker()
 
     training_runner.run()
