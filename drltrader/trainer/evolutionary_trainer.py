@@ -9,7 +9,7 @@ from drltrader.brain.brain import Brain
 from drltrader.data import DataRepository
 from drltrader.data.ohlcv_data_repository import AlpacaOHLCVDataRepository
 from drltrader.data.indicators_data_repository import IndicatorsDataRepository
-from drltrader.trainer.dna_brain_config_mapper import DnaBrainConfigMapper
+from drltrader.trainer.dna_decoder import DnaDecoder
 
 logging.config.fileConfig('log.ini', disable_existing_loggers=False)
 logger = logging.getLogger(__name__)
@@ -59,7 +59,7 @@ class EvolutionaryTrainer:
         self.solutions_statistics: pd.DataFrame = None
         self.current_population = None
         self.current_timesteps = None
-        self._dna_brain_config_mapper = DnaBrainConfigMapper(features_per_symbol=self.data_repository.get_columns_per_symbol())
+        self._dna_brain_config_mapper = DnaDecoder(features_per_symbol=self.data_repository.get_columns_per_symbol())
 
     def train(self, training_configuration: TrainingConfiguration) -> BrainConfiguration:
         self.fitness_cache = {}

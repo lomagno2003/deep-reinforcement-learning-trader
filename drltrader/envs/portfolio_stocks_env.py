@@ -6,7 +6,7 @@ import logging.config
 from gym import spaces
 import matplotlib.pyplot as plt
 
-from drltrader.observers import Order, Sides
+from drltrader.observers import Observer, Order, Sides
 
 logging.config.fileConfig('log.ini', disable_existing_loggers=False)
 logger = logging.getLogger(__name__)
@@ -45,7 +45,7 @@ class PortfolioStocksEnv(gym.Env):
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=self.shape, dtype=np.float32)
 
         # Initialize Runtime Variables
-        self.observer = None
+        self._observer = None
         self._done = None
         self._current_tick = None
         self._portfolio_allocation = None
@@ -54,8 +54,8 @@ class PortfolioStocksEnv(gym.Env):
         self.reset()
 
     def append_data(self, dataframe_per_symbol: dict):
-        if self.observer is not None:
-            self.observer.notify_new_data()
+        if self._observer is not None:
+            self._observer.notify_new_data()
 
         new_dataframe_per_symbol = {}
 
@@ -71,6 +71,10 @@ class PortfolioStocksEnv(gym.Env):
 
         if not self._done:
             logger.info("New data was added and the brain can check it out")
+
+    def observe(self, observer: Observer):
+        self._observer = observer
+        self._observer.notify_begin_of_observation(self._portfolio_allocation)
 
     def step(self, action):
         if self._done:
@@ -198,17 +202,17 @@ class PortfolioStocksEnv(gym.Env):
         self._portfolio_allocation[target_symbol] = target_symbol_original_shares + target_symbol_new_shares
 
         # Notify Observer
-        if self.observer is not None:
-            self.observer.notify_order(Order(symbol=target_symbol,
-                                             qty=target_symbol_new_shares,
-                                             price=target_symbol_price,
-                                             side=Sides.Buy))
-            self.observer.notify_order(Order(symbol=source_symbol,
-                                             qty=source_symbol_shares,
-                                             price=source_symbol_price,
-                                             side=Sides.Sell))
+        if self._observer is not None:
+            self._observer.notify_order(Order(symbol=target_symbol,
+                                              qty=target_symbol_new_shares,
+                                              price=target_symbol_price,
+                                              side=Sides.Buy))
+            self._observer.notify_order(Order(symbol=source_symbol,
+                                              qty=source_symbol_shares,
+                                              price=source_symbol_price,
+                                              side=Sides.Sell))
 
-            self.observer.notify_portfolio_change(portfolio=self._portfolio_allocation)
+            self._observer.notify_portfolio_change(portfolio=self._portfolio_allocation)
 
         # Statistics
         allocation_details = {

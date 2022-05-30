@@ -25,3 +25,6 @@ class Observer:
 
     def notify_portfolio_change(self, portfolio: dict):
         pass
+
+    def notify_begin_of_observation(self, portfolio: dict):
+        pass

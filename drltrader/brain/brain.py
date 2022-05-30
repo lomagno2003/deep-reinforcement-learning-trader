@@ -89,7 +89,8 @@ class Brain:
         # TODO: Validate that scenario is without end_date
         internal_environment, environment, info = self._analyze_scenario(scenario, render=False)
 
-        internal_environment.observer = observer
+        internal_environment.observe(observer)
+
         self._observing = True
         while self._observing:
             print("Running cycle...")

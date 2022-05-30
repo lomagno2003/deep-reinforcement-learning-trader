@@ -1,4 +1,5 @@
 import alpaca_trade_api as tradeapi
+import math
 import json
 import logging
 import logging.config
@@ -19,22 +20,43 @@ class AlpacaObserver(Observer):
         self._alpaca_secret = config['alpaca']['secret']
         self._alpaca_url = config['alpaca']['url']
 
-        self._alpaca_api = api = tradeapi.REST(self._alpaca_key,
-                                               self._alpaca_secret,
-                                               self._alpaca_url,
-                                               api_version='v2')
+        self._alpaca_api = tradeapi.REST(self._alpaca_key,
+                                         self._alpaca_secret,
+                                         self._alpaca_url,
+                                         api_version='v2')
 
         # Test it works
-        logger.info(f"The status of the alpaca account is {api.get_account()}")
+        logger.info(f"The status of the alpaca account is {self._alpaca_api.get_account()}")
 
-    def notify_order(self, order: Order):
-        quantity = str(int(10000.0 / order.price))
+    def notify_portfolio_change(self, portfolio: dict):
+        self._update_portfolio(portfolio=portfolio)
 
-        order = self._alpaca_api.submit_order(symbol=order.symbol,
-                                              qty=quantity,
-                                              side=order.side,
-                                              type="market",
-                                              time_in_force="day")
+    def notify_begin_of_observation(self, portfolio: dict):
+        self._update_portfolio(portfolio=portfolio)
 
-        logger.info(f"Order to {order.side} {quantity} {order.symbol} stocks submitted")
-        logger.debug(order.__dict__)
+    def _update_portfolio(self, portfolio: dict):
+        # TODO: For now we are assuming only 1 symbol can be found
+        non_marginable_buying_power = float(self._alpaca_api.get_account().non_marginable_buying_power)
+
+        selected_symbol = None
+        for symbol in portfolio:
+            if portfolio[symbol] > 0:
+                selected_symbol = symbol
+
+        for position in self._alpaca_api.list_positions():
+            if position.symbol != selected_symbol and int(position.qty_available) != 0:
+                self._alpaca_api.close_position(symbol=position.symbol)
+
+        current_stock_price = float(self._alpaca_api.get_latest_bar(selected_symbol).c)
+        new_stocks = int(non_marginable_buying_power / current_stock_price)
+
+        if new_stocks > 0:
+            # FIXME: Hardcoded side
+            order = self._alpaca_api.submit_order(symbol=selected_symbol,
+                                                  qty=new_stocks,
+                                                  side='buy',
+                                                  type="market",
+                                                  time_in_force="day")
+
+            logger.info(f"Order to {order.side} {order.qty} {order.symbol} stocks submitted")
+            logger.debug(order.__dict__)
