@@ -252,7 +252,7 @@ class PortfolioStocksEnv(gym.Env):
             signals_for_symbol_for_tick = signals_for_symbol[(current_tick - self._window_size):current_tick]
             result = signals_for_symbol_for_tick if result is None else np.hstack([result, signals_for_symbol_for_tick])
 
-        return np.array(result)
+        return np.array(result).transpose()
 
     def _get_allocated_symbol(self):
         # FIXME: This function will go away once multiple allocations are allowed

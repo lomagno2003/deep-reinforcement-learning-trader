@@ -22,10 +22,10 @@ class EvolutionaryTrainerTestCase(unittest.TestCase):
                                        start_date=datetime.now() - timedelta(days=30),
                                        end_date=datetime.now())]
         testing_scenarios = [Scenario(symbol='TSLA',
-                                      start_date=datetime.now() - timedelta(days=2),
+                                      start_date=datetime.now() - timedelta(days=7),
                                       end_date=datetime.now())]
         training_configuration = TrainingConfiguration(training_scenarios=training_scenarios,
-                                                       testing_scenarios=testing_scenarios)
+                                                       validation_scenarios=testing_scenarios)
 
         # Act
         best_brain_configuration: BrainConfiguration = trainer.train(training_configuration)
@@ -53,7 +53,7 @@ class EvolutionaryTrainerTestCase(unittest.TestCase):
                                       end_date=datetime.now())
                              ]
         training_configuration = TrainingConfiguration(training_scenarios=training_scenarios,
-                                                       testing_scenarios=testing_scenarios,
+                                                       validation_scenarios=testing_scenarios,
                                                        generations=100,
                                                        start_population=20,
                                                        stop_population=5,

@@ -7,6 +7,7 @@ from drltrader.data import Scenario
 from drltrader.envs.portfolio_stocks_env import PortfolioStocksEnv
 from drltrader.data.ohlcv_data_repository import OHLCVDataRepository
 from drltrader.data.ohlcv_data_repository import AlpacaOHLCVDataRepository
+from drltrader.data.indicators_data_repository import IndicatorsDataRepository
 
 
 class PortfolioStocksEnvTestCase(unittest.TestCase):
@@ -106,9 +107,10 @@ class PortfolioStocksEnvTestCase(unittest.TestCase):
     def _build_testing_dataframe_per_symbol(self):
         scenario = Scenario(symbols=['TSLA', 'MSFT', 'AAPL'],
                             start_date=datetime.now() - timedelta(days=30),
-                            end_date=datetime.now())
+                            end_date=datetime.now(),
+                            interval='5m')
 
-        dataframe_per_symbol = AlpacaOHLCVDataRepository().retrieve_datas(scenario)
+        dataframe_per_symbol = IndicatorsDataRepository(AlpacaOHLCVDataRepository()).retrieve_datas(scenario)
 
         return dataframe_per_symbol
 

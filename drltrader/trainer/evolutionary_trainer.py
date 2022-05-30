@@ -1,3 +1,4 @@
+import math
 import pandas as pd
 import pygad
 import logging
@@ -8,6 +9,7 @@ from drltrader.brain.brain import Brain
 from drltrader.data import DataRepository
 from drltrader.data.ohlcv_data_repository import AlpacaOHLCVDataRepository
 from drltrader.data.indicators_data_repository import IndicatorsDataRepository
+from drltrader.trainer.dna_brain_config_mapper import DnaBrainConfigMapper
 
 logging.config.fileConfig('log.ini', disable_existing_loggers=False)
 logger = logging.getLogger(__name__)
@@ -42,28 +44,6 @@ class TrainingConfiguration:
 
 
 class EvolutionaryTrainer:
-    EXCLUDED_COLUMNS = ['Open', 'High', 'Low', 'Close', 'Volume', 'Adj Close']
-    MAX_LAYER_SIZE = 2048
-    MIN_LAYER_SIZE = 32
-
-    MAX_WINDOW_SIZE = 30
-    MIN_WINDOW_SIZE = 1
-
-    # FIXME: We can't go over 1d since it triggers bug on portfolio_stocks_env#L175
-    INTERVALS = ['5m', '15m', '30m', '1h']
-
-    INDICATOR_GENE_ACTIVATION_THRESHOLD = 0.8
-    SYMBOL_GENE_ACTIVATION_THRESHOLD = 0.5
-
-    SYMBOLS = ['TDOC', 'ETSY', 'MELI', 'SE', 'SQ', 'DIS', 'TSLA', 'AAPL', 'MSFT', 'SHOP', 'FB']
-
-    FIRST_LAYER_SIZE_GENE_IDX = 0
-    SECOND_LAYER_SIZE_GENE_IDX = 1
-    WINDOW_SIZE_GENE_IDX = 2
-    USE_NORMALIZED_OBS_GENE_IDX = 3
-    INTERVAL_GENE_IDX = 4
-    DYNAMIC_CONFIGURATIONS_GENE_IDX = 5
-
     INSTANCE = None
 
     def __init__(self, data_repository: DataRepository = IndicatorsDataRepository(AlpacaOHLCVDataRepository())):
@@ -79,6 +59,7 @@ class EvolutionaryTrainer:
         self.solutions_statistics: pd.DataFrame = None
         self.current_population = None
         self.current_timesteps = None
+        self._dna_brain_config_mapper = DnaBrainConfigMapper(features_per_symbol=self.data_repository.get_columns_per_symbol())
 
     def train(self, training_configuration: TrainingConfiguration) -> BrainConfiguration:
         self.fitness_cache = {}
@@ -89,12 +70,10 @@ class EvolutionaryTrainer:
         self._initialize_genetic_algorithm()
 
         self.genetic_algorithm.run()
-        return EvolutionaryTrainer._get_brain_configuration_from_dna(self, self.genetic_algorithm.best_solutions[0])
+        return self._dna_brain_config_mapper.get_brain_configuration_from_dna(self.genetic_algorithm.best_solutions[0])
 
     def _initialize_genetic_algorithm(self):
-        genes = len(self.data_repository.get_columns_per_symbol()) \
-                + EvolutionaryTrainer.DYNAMIC_CONFIGURATIONS_GENE_IDX \
-                + len(EvolutionaryTrainer.SYMBOLS)
+        genes = self._dna_brain_config_mapper.get_genes_size()
         self.genetic_algorithm = pygad.GA(num_generations=self.training_configuration.generations,
                                           num_genes=genes,
                                           init_range_low=0.0,
@@ -149,11 +128,15 @@ class EvolutionaryTrainer:
     @staticmethod
     def _evaluate_fitness(solution, solution_idx):
         trainer: EvolutionaryTrainer = EvolutionaryTrainer.INSTANCE
-        brain_configuration = EvolutionaryTrainer._get_brain_configuration_from_dna(trainer, solution)
-        solution_name = f"{trainer.genetic_algorithm.generations_completed}_{solution_idx}"
 
+        solution_name = f"{trainer.genetic_algorithm.generations_completed}_{solution_idx}"
         logger.info(f"Solution {solution_name}")
+
+        brain_configuration = trainer._dna_brain_config_mapper.get_brain_configuration_from_dna(solution)
         logger.info(f"Brain Configuration: {brain_configuration}")
+
+        if brain_configuration is None:
+            return -math.inf
 
         if solution_name not in trainer.fitness_cache:
             logger.info("Fitness not in cache, calculating fitness...")
@@ -191,58 +174,3 @@ class EvolutionaryTrainer:
         else:
             logger.info("Fitness in cache, returning saved fitness...")
             return trainer.fitness_cache[solution_name]
-
-    @staticmethod
-    def _get_brain_configuration_from_dna(trainer, dna):
-        window_size = EvolutionaryTrainer._calculate_value(EvolutionaryTrainer.MIN_WINDOW_SIZE,
-                                                           EvolutionaryTrainer.MAX_WINDOW_SIZE,
-                                                           EvolutionaryTrainer.WINDOW_SIZE_GENE_IDX,
-                                                           dna)
-
-        first_layer_size = EvolutionaryTrainer._calculate_value(EvolutionaryTrainer.MIN_LAYER_SIZE,
-                                                                EvolutionaryTrainer.MAX_LAYER_SIZE,
-                                                                EvolutionaryTrainer.FIRST_LAYER_SIZE_GENE_IDX,
-                                                                dna)
-
-        second_layer_size = EvolutionaryTrainer._calculate_value(EvolutionaryTrainer.MIN_LAYER_SIZE,
-                                                                 EvolutionaryTrainer.MAX_LAYER_SIZE,
-                                                                 EvolutionaryTrainer.SECOND_LAYER_SIZE_GENE_IDX,
-                                                                 dna)
-
-        use_normalized_observations = True if dna[EvolutionaryTrainer.USE_NORMALIZED_OBS_GENE_IDX] > 0.5 else False
-
-        interval_idx = int(len(EvolutionaryTrainer.INTERVALS) * dna[EvolutionaryTrainer.INTERVAL_GENE_IDX])
-        interval = EvolutionaryTrainer.INTERVALS[interval_idx]
-
-        signal_feature_names = []
-
-        for indicator_idx in range(0, len(trainer.data_repository.get_columns_per_symbol())):
-            if dna[EvolutionaryTrainer.DYNAMIC_CONFIGURATIONS_GENE_IDX + indicator_idx] > \
-                    EvolutionaryTrainer.INDICATOR_GENE_ACTIVATION_THRESHOLD:
-                selected_feature = trainer.data_repository.get_columns_per_symbol()[indicator_idx]
-
-                if selected_feature not in EvolutionaryTrainer.EXCLUDED_COLUMNS:
-                    signal_feature_names.append(selected_feature)
-
-        symbols_gene_start_idx = EvolutionaryTrainer.DYNAMIC_CONFIGURATIONS_GENE_IDX \
-                                 + len(trainer.data_repository.get_columns_per_symbol()) - 1
-
-        # FIXME: Hardcoded value
-        symbols = ['SPY']
-
-        for symbol_idx in range(0, len(EvolutionaryTrainer.SYMBOLS)):
-            if dna[symbols_gene_start_idx + symbol_idx] > \
-                    EvolutionaryTrainer.SYMBOL_GENE_ACTIVATION_THRESHOLD:
-                symbols.append(EvolutionaryTrainer.SYMBOLS[symbol_idx])
-
-        return BrainConfiguration(first_layer_size=first_layer_size,
-                                  second_layer_size=second_layer_size,
-                                  window_size=window_size,
-                                  signal_feature_names=signal_feature_names,
-                                  use_normalized_observations=use_normalized_observations,
-                                  interval=interval,
-                                  symbols=symbols)
-
-    @staticmethod
-    def _calculate_value(min, max, gene_idx, dna):
-        return int(min + (max - min) * dna[gene_idx])

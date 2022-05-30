@@ -21,9 +21,9 @@ class PrintEnvObserver(Observer):
 
 class CallbackObserver(Observer):
     def __init__(self,
-                 new_data_callback_function,
-                 order_callback_function,
-                 portfolio_callback_function):
+                 new_data_callback_function=None,
+                 order_callback_function=None,
+                 portfolio_callback_function=None):
         self._new_data_callback_function = new_data_callback_function
         self._order_callback_function = order_callback_function
         self._portfolio_callback_function = portfolio_callback_function

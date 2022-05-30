@@ -26,7 +26,7 @@ class TrainingBenchmarker:
 
     def run(self):
         root_datetime = datetime.now()
-        testing_weeks = 20
+        testing_weeks = 14
         testing_profits = []
 
         for week in range(testing_weeks):

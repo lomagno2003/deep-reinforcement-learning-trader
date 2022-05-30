@@ -12,8 +12,8 @@ from drltrader.data import DataRepository
 from drltrader.data.ohlcv_data_repository import AlpacaOHLCVDataRepository
 from drltrader.data.indicators_data_repository import IndicatorsDataRepository
 from drltrader.data import Scenario
-from drltrader.envs.single_stock_env import SingleStockEnv
 from drltrader.envs.portfolio_stocks_env import PortfolioStocksEnv
+from drltrader.envs.portfolio_features_extractor import PortfolioFeaturesExtractor
 from drltrader.observers import Observer
 
 logging.config.fileConfig('log.ini', disable_existing_loggers=False)
@@ -22,16 +22,25 @@ logger = logging.getLogger(__name__)
 
 class BrainConfiguration:
     def __init__(self,
-                 first_layer_size: int = 256,
-                 second_layer_size: int = 256,
-                 window_size: int = 3,
+                 f_cnn1_kernel_count: int = 32,
+                 f_cnn1_kernel_size: int = 8,
+                 f_cnn2_kernel_count: int = 64,
+                 f_cnn2_kernel_size: int = 4,
+                 f_linear1_size: int = 64,
+                 f_linear2_size: int = 64,
+                 window_size: int = 12,
                  prices_feature_name: str = 'Low',
                  signal_feature_names: list = ['Low', 'Volume'],
                  use_normalized_observations: bool = True,
                  interval: str = '15m',
                  symbols: list = ['SPY']):
-        self.first_layer_size = first_layer_size
-        self.second_layer_size = second_layer_size
+        self.f_cnn1_kernel_count = f_cnn1_kernel_count
+        self.f_cnn1_kernel_size = f_cnn1_kernel_size
+        self.f_cnn2_kernel_count = f_cnn2_kernel_count
+        self.f_cnn2_kernel_size = f_cnn2_kernel_size
+        self.f_linear1_size = f_linear1_size
+        self.f_linear2_size = f_linear2_size
+
         self.window_size = window_size
         self.prices_feature_name = prices_feature_name
         self.use_normalized_observations = use_normalized_observations
@@ -112,8 +121,16 @@ class Brain:
         self._observing = False
 
     def _init_model(self, env):
-        policy_kwargs = dict(net_arch=[self._brain_configuration.first_layer_size,
-                                       self._brain_configuration.second_layer_size])
+        policy_kwargs = dict(
+            features_extractor_class=PortfolioFeaturesExtractor,
+            features_extractor_kwargs=dict(
+                f_cnn1_kernel_count=self._brain_configuration.f_cnn1_kernel_count,
+                f_cnn1_kernel_size=self._brain_configuration.f_cnn1_kernel_size,
+                f_cnn2_kernel_count=self._brain_configuration.f_cnn2_kernel_count,
+                f_cnn2_kernel_size=self._brain_configuration.f_cnn2_kernel_size,
+                f_linear1_size=self._brain_configuration.f_linear1_size,
+                f_linear2_size=self._brain_configuration.f_linear2_size),
+        )
 
         self._model = A2C('MlpPolicy', env, verbose=0, policy_kwargs=policy_kwargs)
 
@@ -161,27 +178,12 @@ class Brain:
     def _build_environment(self, scenario: Scenario):
         scenario = self._build_scenario(scenario)
 
-        env = None
-        if scenario.symbols is not None:
-            env = self._build_portfolio_stock_scenario(scenario)
-        else:
-            env = self._build_single_stock_scenario(scenario)
+        env = self._build_portfolio_stock_scenario(scenario)
 
         if self._brain_configuration.use_normalized_observations:
             return VecNormalize(DummyVecEnv([lambda: env]))
         else:
             return DummyVecEnv([lambda: env])
-
-    def _build_single_stock_scenario(self, scenario: Scenario):
-        # TODO: env_observer is not forwarded to SingleStockEnv
-        symbol_dataframe = self._data_repository.retrieve_data(scenario)
-        env = SingleStockEnv(df=symbol_dataframe,
-                             window_size=self._brain_configuration.window_size,
-                             frame_bound=(self._brain_configuration.window_size, len(symbol_dataframe.index) - 1),
-                             prices_feature_name=self._brain_configuration.prices_feature_name,
-                             signal_feature_names=self._brain_configuration.signal_feature_names)
-
-        return env
 
     def _build_portfolio_stock_scenario(self, scenario: Scenario):
         dataframe_per_symbol = self._data_repository.retrieve_datas(scenario)
