@@ -18,6 +18,9 @@ class PrintEnvObserver(Observer):
     def notify_portfolio_change(self, portfolio: dict):
         print(f"There was a portfolio change: {str(portfolio)}")
 
+    def notify_begin_of_observation(self, portfolio: dict):
+        print(f"There was a portfolio change: {str(portfolio)}")
+
 
 class CallbackObserver(Observer):
     def __init__(self,
@@ -37,6 +40,9 @@ class CallbackObserver(Observer):
     def notify_portfolio_change(self, portfolio: dict):
         self._portfolio_callback_function(portfolio)
 
+    def notify_begin_of_observation(self, portfolio: dict):
+        self._portfolio_callback_function(portfolio)
+
 
 class CompositeObserver(Observer):
     def __init__(self, observers: list):
@@ -51,6 +57,10 @@ class CompositeObserver(Observer):
             observer.notify_order(order)
 
     def notify_portfolio_change(self, portfolio: dict):
+        for observer in self._observers:
+            observer.notify_portfolio_change(portfolio)
+
+    def notify_begin_of_observation(self, portfolio: dict):
         for observer in self._observers:
             observer.notify_portfolio_change(portfolio)
 
@@ -72,6 +82,12 @@ class SafeObserver(Observer):
             logging.warning(traceback.format_exc())
 
     def notify_portfolio_change(self, portfolio: dict):
+        try:
+            self._observer.notify_portfolio_change(portfolio)
+        except:
+            logging.warning(traceback.format_exc())
+
+    def notify_begin_of_observation(self, portfolio: dict):
         try:
             self._observer.notify_portfolio_change(portfolio)
         except:

@@ -22,5 +22,6 @@ class TelegramObserverTestCase(unittest.TestCase):
         # FIXME: In here you'll need to check the alpaca API to see if it worked
         # FIXME: This test might fail if run outside of market hours since the orders are accepted but never processed
 
+
 if __name__ == '__main__':
     unittest.main()

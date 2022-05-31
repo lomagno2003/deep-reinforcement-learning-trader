@@ -28,6 +28,10 @@ class TelegramObserver(Observer):
         text = f"Portfolio changed to: {str(portfolio)}"
         self.send_message_to_group(text)
 
+    def notify_begin_of_observation(self, portfolio: dict):
+        text = f"Portfolio changed to: {str(portfolio)}"
+        self.send_message_to_group(text)
+
     def start_polling(self):
         dispatcher = self._updater.dispatcher
         dispatcher.add_handler(CommandHandler("portfolio", TelegramObserver.portfolio_command))
