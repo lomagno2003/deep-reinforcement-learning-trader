@@ -28,8 +28,8 @@ class AlpacaObserver(Observer):
         # Test it works
         logger.info(f"The status of the alpaca account is {self._alpaca_api.get_account()}")
 
-    def notify_portfolio_change(self, portfolio: dict):
-        self._update_portfolio(portfolio=portfolio)
+    def notify_portfolio_change(self, old_portfolio: dict, new_portfolio: dict):
+        self._update_portfolio(portfolio=new_portfolio)
 
     def notify_begin_of_observation(self, portfolio: dict):
         self._update_portfolio(portfolio=portfolio)
@@ -39,9 +39,14 @@ class AlpacaObserver(Observer):
         non_marginable_buying_power = float(self._alpaca_api.get_account().non_marginable_buying_power)
 
         selected_symbol = None
+        selected_side = None
         for symbol in portfolio:
-            if portfolio[symbol] > 0:
+            if portfolio[symbol] > 0.0:
                 selected_symbol = symbol
+                selected_side = 'long'
+            elif portfolio[symbol] < 0.0:
+                selected_symbol = symbol
+                selected_side = 'short'
 
         for position in self._alpaca_api.list_positions():
             if position.symbol != selected_symbol and int(position.qty_available) != 0:
@@ -50,13 +55,21 @@ class AlpacaObserver(Observer):
         current_stock_price = float(self._alpaca_api.get_latest_bar(selected_symbol).c)
         new_stocks = int(non_marginable_buying_power / current_stock_price)
 
-        if new_stocks > 0:
-            # FIXME: Hardcoded side
+        if new_stocks == 0:
+            return
+
+        if selected_side == 'long':
             order = self._alpaca_api.submit_order(symbol=selected_symbol,
                                                   qty=new_stocks,
                                                   side='buy',
                                                   type="market",
                                                   time_in_force="day")
+        elif selected_side == 'short':
+            order = self._alpaca_api.submit_order(symbol=selected_symbol,
+                                                  qty=new_stocks,
+                                                  side='sell',
+                                                  type="market",
+                                                  time_in_force="day")
 
-            logger.info(f"Order to {order.side} {order.qty} {order.symbol} stocks submitted")
-            logger.debug(order.__dict__)
+        logger.info(f"Order to {order.side} {order.qty} {order.symbol} stocks submitted")
+        logger.debug(order.__dict__)

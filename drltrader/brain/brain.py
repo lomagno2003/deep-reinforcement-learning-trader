@@ -79,8 +79,9 @@ class Brain:
 
     def evaluate(self,
                  testing_scenario: Scenario,
-                 render=False):
-        _, _, info = self._analyze_scenario(testing_scenario, render=render)
+                 render: bool = False,
+                 observer: Observer = None):
+        _, _, info = self._analyze_scenario(testing_scenario, render=render, observer=observer)
         return info
 
     def start_observing(self, scenario: Scenario, observer: Observer = None):
@@ -137,7 +138,8 @@ class Brain:
 
     def _analyze_scenario(self,
                           scenario: Scenario,
-                          render=True):
+                          render: bool = True,
+                          observer: Observer = None):
         environment = self._build_environment(scenario=scenario)
 
         obs = environment.reset()
@@ -149,6 +151,7 @@ class Brain:
             internal_environment = environment.envs[0]
 
         internal_environment.disable_reset()
+        internal_environment.observe(observer)
 
         while True:
             obs = obs[np.newaxis, ...]

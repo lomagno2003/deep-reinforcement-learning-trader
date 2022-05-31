@@ -20,10 +20,7 @@ class Observer:
     def notify_new_data(self):
         pass
 
-    def notify_order(self, order: Order):
-        pass
-
-    def notify_portfolio_change(self, portfolio: dict):
+    def notify_portfolio_change(self, old_portfolio: dict, new_portfolio: dict):
         pass
 
     def notify_begin_of_observation(self, portfolio: dict):

@@ -20,12 +20,8 @@ class TelegramObserver(Observer):
     def notify_new_data(self):
         self.send_message_to_group(text="There's new data available")
 
-    def notify_order(self, order: Order):
-        text = f"There was an order to {order.side} {order.qty} stocks of {order.symbol}"
-        self.send_message_to_group(text=text)
-
-    def notify_portfolio_change(self, portfolio: dict):
-        text = f"Portfolio changed to: {str(portfolio)}"
+    def notify_portfolio_change(self, old_portfolio: dict, new_portfolio: dict):
+        text = f"Portfolio changed from {str(old_portfolio)} to {str(new_portfolio)}"
         self.send_message_to_group(text)
 
     def notify_begin_of_observation(self, portfolio: dict):

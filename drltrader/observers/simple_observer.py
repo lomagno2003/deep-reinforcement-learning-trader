@@ -12,11 +12,8 @@ class PrintEnvObserver(Observer):
     def notify_new_data(self):
         print(f"There's new data available")
 
-    def notify_order(self, order: Order):
-        print(f"There was an order to {order.side} {order.qty} stocks of {order.symbol}")
-
-    def notify_portfolio_change(self, portfolio: dict):
-        print(f"There was a portfolio change: {str(portfolio)}")
+    def notify_portfolio_change(self, old_portfolio: dict, new_portfolio: dict):
+        print(f"There was a portfolio change from {str(old_portfolio)} to {str(new_portfolio)}")
 
     def notify_begin_of_observation(self, portfolio: dict):
         print(f"There was a portfolio change: {str(portfolio)}")
@@ -34,11 +31,8 @@ class CallbackObserver(Observer):
     def notify_new_data(self):
         self._new_data_callback_function
 
-    def notify_order(self, order: Order):
-        self._callback_function(order)
-
-    def notify_portfolio_change(self, portfolio: dict):
-        self._portfolio_callback_function(portfolio)
+    def notify_portfolio_change(self, old_portfolio: dict, new_portfolio: dict):
+        self._portfolio_callback_function(old_portfolio, new_portfolio)
 
     def notify_begin_of_observation(self, portfolio: dict):
         self._portfolio_callback_function(portfolio)
@@ -52,13 +46,9 @@ class CompositeObserver(Observer):
         for observer in self._observers:
             observer.notify_new_data()
 
-    def notify_order(self, order: Order):
+    def notify_portfolio_change(self, old_portfolio: dict, new_portfolio: dict):
         for observer in self._observers:
-            observer.notify_order(order)
-
-    def notify_portfolio_change(self, portfolio: dict):
-        for observer in self._observers:
-            observer.notify_portfolio_change(portfolio)
+            observer.notify_portfolio_change(old_portfolio, new_portfolio)
 
     def notify_begin_of_observation(self, portfolio: dict):
         for observer in self._observers:
@@ -75,15 +65,9 @@ class SafeObserver(Observer):
         except:
             logging.warning(traceback.format_exc())
 
-    def notify_order(self, order: Order):
+    def notify_portfolio_change(self, old_portfolio: dict, new_portfolio: dict):
         try:
-            self._observer.notify_order(order)
-        except:
-            logging.warning(traceback.format_exc())
-
-    def notify_portfolio_change(self, portfolio: dict):
-        try:
-            self._observer.notify_portfolio_change(portfolio)
+            self._observer.notify_portfolio_change(old_portfolio, new_portfolio)
         except:
             logging.warning(traceback.format_exc())
 

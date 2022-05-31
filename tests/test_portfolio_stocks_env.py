@@ -49,7 +49,7 @@ class PortfolioStocksEnvTestCase(unittest.TestCase):
         environment: PortfolioStocksEnv = self._build_testing_environment()
 
         # Act
-        environment._transfer_allocations('TSLA', 'AAPL', environment._current_tick)
+        environment._transfer_allocations('TSLA', 'long', 'AAPL', 'short', environment._current_tick)
         current_profit = environment.current_profit()
 
         # Assert
@@ -74,13 +74,15 @@ class PortfolioStocksEnvTestCase(unittest.TestCase):
 
     def test_append_data(self):
         # Arrange
-        data_repository: OHLCVDataRepository = AlpacaOHLCVDataRepository()
+        data_repository: OHLCVDataRepository = IndicatorsDataRepository(AlpacaOHLCVDataRepository())
         first_scenario = Scenario(symbols=['TSLA', 'MSFT', 'AAPL'],
                                   start_date=datetime.now() - timedelta(days=60),
-                                  end_date=datetime.now() - timedelta(days=30))
+                                  end_date=datetime.now() - timedelta(days=30),
+                                  interval='15m')
         second_scenario = Scenario(symbols=['TSLA', 'MSFT', 'AAPL'],
                                    start_date=datetime.now() - timedelta(days=45),
-                                   end_date=datetime.now() - timedelta(days=15))
+                                   end_date=datetime.now() - timedelta(days=15),
+                                   interval='15m')
         first_dataframe_per_symbol = data_repository.retrieve_datas(first_scenario)
         second_dataframe_per_symbol = data_repository.retrieve_datas(second_scenario)
 
@@ -97,12 +99,12 @@ class PortfolioStocksEnvTestCase(unittest.TestCase):
             if done:
                 break
 
-        self.assertIsNone(obs)
+        self.assertTrue(done)
         environment.append_data(second_dataframe_per_symbol)
 
         # Assert
         obs, rewards, done, info = environment.step(action)
-        self.assertIsNotNone(obs)
+        self.assertFalse(done)
 
     def _build_testing_dataframe_per_symbol(self):
         scenario = Scenario(symbols=['TSLA', 'MSFT', 'AAPL'],

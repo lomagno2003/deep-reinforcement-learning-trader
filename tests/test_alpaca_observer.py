@@ -11,12 +11,23 @@ class TelegramObserverTestCase(unittest.TestCase):
         # Assert
         self.assertIsNotNone(alpaca_observer)
 
-    def test_notify_begin_of_observation(self):
+    def test_notify_begin_of_observation_long(self):
         # Arrange
         alpaca_observer: AlpacaObserver = AlpacaObserver()
 
         # Act
         alpaca_observer.notify_begin_of_observation(portfolio={'TSLA': 10})
+
+        # Assert
+        # FIXME: In here you'll need to check the alpaca API to see if it worked
+        # FIXME: This test might fail if run outside of market hours since the orders are accepted but never processed
+
+    def test_notify_begin_of_observation_short(self):
+        # Arrange
+        alpaca_observer: AlpacaObserver = AlpacaObserver()
+
+        # Act
+        alpaca_observer.notify_begin_of_observation(portfolio={'TSLA': -10})
 
         # Assert
         # FIXME: In here you'll need to check the alpaca API to see if it worked
