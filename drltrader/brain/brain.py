@@ -79,8 +79,10 @@ class Brain:
 
     def learn(self,
               training_scenario: Scenario,
-              total_timesteps: int = 1000):
-        training_environment = self._build_environment(training_scenario)
+              total_timesteps: int = 1000,
+              rendering_enabled: bool = False):
+        training_environment = self._build_environment(scenario=training_scenario,
+                                                       rendering_enabled=rendering_enabled)
 
         if self._model is None:
             self._init_model(training_environment)
@@ -91,16 +93,19 @@ class Brain:
 
     def evaluate(self,
                  testing_scenario: Scenario,
-                 render: bool = False,
+                 rendering_enabled: bool = False,
                  observer: Observer = None):
-        _, _, info = self._analyze_scenario(testing_scenario, render=render, observer=observer)
+        _, _, info = self._analyze_scenario(testing_scenario,
+                                            rendering_enabled=rendering_enabled,
+                                            observer=observer)
         return info
 
     def start_observing(self, scenario: Scenario, observer: Observer = None):
         scenario = self._build_scenario(scenario)
         # TODO: This is done only for PortfolioStocksEnv
         # TODO: Validate that scenario is without end_date
-        internal_environment, environment, info = self._analyze_scenario(scenario, render=False)
+        internal_environment, environment, info = self._analyze_scenario(scenario=scenario,
+                                                                         rendering_enabled=False)
 
         internal_environment.observe(observer)
 
@@ -160,9 +165,10 @@ class Brain:
 
     def _analyze_scenario(self,
                           scenario: Scenario,
-                          render: bool = True,
+                          rendering_enabled: bool = True,
                           observer: Observer = None):
-        environment = self._build_environment(scenario=scenario)
+        environment = self._build_environment(scenario=scenario,
+                                              rendering_enabled=rendering_enabled)
 
         obs = environment.reset()
 
@@ -198,17 +204,17 @@ class Brain:
 
         return scenario
 
-    def _build_environment(self, scenario: Scenario):
+    def _build_environment(self, scenario: Scenario, rendering_enabled: bool = False):
         scenario = self._build_scenario(scenario)
 
-        env = self._build_portfolio_stock_scenario(scenario)
+        env = self._build_portfolio_stock_scenario(scenario, rendering_enabled)
 
         if self._brain_configuration.use_normalized_observations:
             return VecNormalize(DummyVecEnv([lambda: env]))
         else:
             return DummyVecEnv([lambda: env])
 
-    def _build_portfolio_stock_scenario(self, scenario: Scenario):
+    def _build_portfolio_stock_scenario(self, scenario: Scenario, rendering_enabled: bool = False):
         dataframe_per_symbol = self._data_repository.retrieve_datas(scenario)
         first_symbol = list(dataframe_per_symbol.keys())[0]
         initial_portfolio = {first_symbol: 1.0} # FIXME: This is not configurable
@@ -217,6 +223,7 @@ class Brain:
                                  dataframe_per_symbol=dataframe_per_symbol,
                                  window_size=self._brain_configuration.window_size,
                                  prices_feature_name=self._brain_configuration.prices_feature_name,
-                                 signal_feature_names=self._brain_configuration.signal_feature_names)
+                                 signal_feature_names=self._brain_configuration.signal_feature_names,
+                                 rendering_enabled=rendering_enabled)
 
         return env

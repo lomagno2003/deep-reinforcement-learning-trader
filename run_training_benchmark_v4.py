@@ -26,18 +26,11 @@ class TrainingBenchmarker:
         best_brain = self.build_initial_brain_on_datetime()
 
         # Perform benchmarking
-        testing_profits_str = []
-        testing_profits = []
-
         while True:
             logger.info("Training brain")
-            best_brain.learn(self._scenario, total_timesteps=2000)
-            # testing_start_date, testing_end_date, testing_profit = self.train_on_datetime(best_brain=best_brain)
-            # testing_profits_str.append(f"{testing_start_date}->{testing_end_date}: {testing_profit}")
-            # testing_profits.append(testing_profit)
-            #
-            # logger.info(f"Current list of profits: {testing_profits_str}")
-            # logger.info(f"The average profit so far is {np.average(testing_profits)}")
+            best_brain.learn(training_scenario=self._scenario,
+                             total_timesteps=2000,
+                             rendering_enabled=True)
 
     def build_initial_brain_on_datetime(self):
         logger.info(f"Build initial brain")

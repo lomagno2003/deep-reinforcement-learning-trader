@@ -19,4 +19,4 @@ class MixedRewardStrategy(RewardStrategy):
             period_increased = env.profit(current_tick) > env.profit(previous_tick)
             period_incentive = 1.0 if period_increased else -1.0
 
-        return total_profit * 10 + period_incentive
+        return total_profit + period_incentive / 4

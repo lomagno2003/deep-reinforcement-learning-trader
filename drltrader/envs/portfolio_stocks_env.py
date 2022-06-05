@@ -1,4 +1,5 @@
 import gym
+import math
 import numpy as np
 import pandas as pd
 import logging
@@ -25,7 +26,8 @@ class PortfolioStocksEnv(gym.Env):
                  initial_portfolio: dict,
                  prices_feature_name: str = 'Close',
                  signal_feature_names: list = ['RSI_4', 'RSI_16'],
-                 reward_strategy: RewardStrategy = MixedRewardStrategy()):
+                 reward_strategy: RewardStrategy = MixedRewardStrategy(),
+                 rendering_enabled: bool = False):
         super(PortfolioStocksEnv, self).__init__()
 
         # Save Configurations
@@ -35,6 +37,7 @@ class PortfolioStocksEnv(gym.Env):
         self._prices_feature_name = prices_feature_name
         self._signal_feature_names = signal_feature_names
         self._reward_strategy = reward_strategy
+        self._rendering_enabled = rendering_enabled
 
         # Initialize Custom Configurations
         self._reset_enabled = True
@@ -206,14 +209,20 @@ class PortfolioStocksEnv(gym.Env):
 
     def _calculate_runtime_signals(self):
         portfolio_tick, portfolio = self._find_portfolio_on_tick(query_tick=self.current_tick)
-        symbol, _ = self._get_allocated_position(portfolio)
+        symbol, side = self._get_allocated_position(portfolio)
 
         current_price = self._prices_per_symbol[symbol][self.current_tick]
         last_price = self._prices_per_symbol[symbol][portfolio_tick]
 
+        profit = current_price - last_price if side == 'long' else last_price - current_price
+        profit = (profit * 10) / last_price
+
+        position_age_ticks = self.current_tick - portfolio_tick
+        position_age = position_age_ticks/1000
+
         # FIXME: What about shorting?
-        self._portfolio_profit_history = np.append(self._portfolio_profit_history, current_price - last_price)
-        self._portfolio_position_age_history = np.append(self._portfolio_position_age_history, 1.0 / (self.current_tick - portfolio_tick + 1))
+        self._portfolio_profit_history = np.append(self._portfolio_profit_history, profit)
+        self._portfolio_position_age_history = np.append(self._portfolio_position_age_history, position_age)
 
     def _transfer_allocations(self, source_symbol, source_side, target_symbol, target_side):
         # Temporary Variables
@@ -285,8 +294,7 @@ class PortfolioStocksEnv(gym.Env):
     def get_step_outputs(self):
         self._done = self.current_tick == self._frame_bound[1]
 
-        if self._done:
-            # TODO: Remove this since it's for testing only
+        if self._done and self._rendering_enabled:
             self.render_all()
 
         observation = self._get_observation(self.current_tick)
@@ -358,8 +366,8 @@ class PortfolioStocksEnv(gym.Env):
 
     def render_all(self,
                    render_signals: bool = True,
-                   render_rewards: bool = False,
-                   render_feature_names: list = [],
+                   render_rewards: bool = True,
+                   render_runtime_signals: bool = True,
                    render_exclusion_feature_names: list = ['5m_Close']):
         prices_per_symbol = {}
         plt.figure(figsize=(15, 6))
@@ -416,7 +424,6 @@ class PortfolioStocksEnv(gym.Env):
             for symbol in self._signal_features_per_symbol:
                 transposed_signal_features = self._signal_features_per_symbol[symbol].transpose()
                 for signal_feature_name in self._signal_feature_names:
-                # for signal_feature_name in render_feature_names:
                     if signal_feature_name in render_exclusion_feature_names:
                         continue
 
@@ -427,9 +434,19 @@ class PortfolioStocksEnv(gym.Env):
         if render_rewards:
             plt.plot(self._rewards_history, alpha=0.7, label='Reward')
 
+        if render_runtime_signals:
+            plt.plot(self._portfolio_profit_history, alpha=0.7, label='Profit')
+            plt.plot(self._portfolio_position_age_history, alpha=0.7, label='Position Age')
+            # plt.plot(self._portfolio_profit_history, alpha=0.7, label='Reward')
+
         plt.suptitle(
             "Total Profit: %.6f" % self.profit()
         )
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
         plt.show(block=False)
+
+        # Log stats
+        portfolio_history_dataframe = pd.DataFrame.from_dict(self._portfolio_history, orient='index')
+        logger.info("Here are the portfolio updates:")
+        logger.info(portfolio_history_dataframe.to_string())

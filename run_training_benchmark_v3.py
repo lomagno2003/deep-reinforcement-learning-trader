@@ -97,7 +97,7 @@ class TrainingBenchmarker:
             logger.info(f"Testing brain on scenario {testing_scenario}")
 
             info = best_brain.evaluate(testing_scenario=testing_scenario,
-                                       render=True,
+                                       rendering_enabled=True,
                                        observer=PrintEnvObserver())
             profit = info['total_profit'] if 'total_profit' in info else info['current_profit']
 
