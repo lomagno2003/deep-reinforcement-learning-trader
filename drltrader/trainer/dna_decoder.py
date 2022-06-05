@@ -22,10 +22,10 @@ class DnaDecoder:
     MIN_WINDOW_SIZE = 1
 
     # FIXME: We can't go over 1d since it triggers bug on portfolio_stocks_env#L175
-    INTERVALS = ['5m', '15m', '30m', '1h']
+    INTERVALS = ['5m']
 
     INDICATOR_GENE_ACTIVATION_THRESHOLD = 0.8
-    SYMBOL_GENE_ACTIVATION_THRESHOLD = 0.8
+    SYMBOL_GENE_ACTIVATION_THRESHOLD = 0.2
 
     SYMBOLS = ['TDOC', 'ETSY', 'MELI', 'SE', 'SQ', 'DIS', 'TSLA', 'AAPL', 'MSFT', 'SHOP', 'FB']
 
@@ -114,6 +114,7 @@ class DnaDecoder:
                     DnaDecoder.SYMBOL_GENE_ACTIVATION_THRESHOLD:
                 symbols.append(DnaDecoder.SYMBOLS[symbol_idx])
 
+        # TODO: Hardcoded prices_feature_name
         return BrainConfiguration(f_cnn1_kernel_count=f_cnn1_kernel_count,
                                   f_cnn1_kernel_size=f_cnn1_kernel_size,
                                   f_cnn2_kernel_count=f_cnn2_kernel_count,
@@ -121,6 +122,7 @@ class DnaDecoder:
                                   f_linear1_size=f_linear1_size,
                                   f_linear2_size=f_linear2_size,
                                   window_size=window_size,
+                                  prices_feature_name='5m_Close',
                                   signal_feature_names=signal_feature_names,
                                   use_normalized_observations=use_normalized_observations,
                                   interval=interval,

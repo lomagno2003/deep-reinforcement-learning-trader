@@ -17,7 +17,7 @@ class ResampleDataRepository(DataRepository):
         self._resampled_interval = resampled_interval
 
     def get_repository_name(self):
-        return f"Resample({self._resampled_interval}, {self._source_data_repository.get_repository_name()})"
+        return f"R({self._resampled_interval}, {self._source_data_repository.get_repository_name()})"
 
     def retrieve_datas(self, scenario: Scenario):
         dataframe_per_symbol = self._source_data_repository.retrieve_datas(scenario)

@@ -17,7 +17,7 @@ class PrefixDataRepository(DataRepository):
         self._column_prefix = column_prefix
 
     def get_repository_name(self):
-        return f"Prefix({self._column_prefix}, {self._source_data_repository.get_repository_name()})"
+        return f"P({self._column_prefix}, {self._source_data_repository.get_repository_name()})"
 
     def retrieve_datas(self, scenario: Scenario):
         dataframe_per_symbol = self._source_data_repository.retrieve_datas(scenario)

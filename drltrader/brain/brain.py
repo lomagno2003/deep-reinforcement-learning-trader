@@ -6,7 +6,6 @@ import time
 
 from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
 from stable_baselines3 import A2C
-from matplotlib import pyplot as plt
 
 from drltrader.data import DataRepository
 from drltrader.data.ohlcv_data_repository import AlpacaOHLCVDataRepository
@@ -24,22 +23,35 @@ class BrainConfiguration:
     def __init__(self,
                  f_cnn1_kernel_count: int = 32,
                  f_cnn1_kernel_size: int = 8,
+                 f_pool1_size: int = 2,
+                 f_pool1_stride: int = 8,
                  f_cnn2_kernel_count: int = 64,
                  f_cnn2_kernel_size: int = 4,
+                 f_pool2_size: int = 2,
+                 f_pool2_stride: int = 8,
                  f_linear1_size: int = 64,
                  f_linear2_size: int = 64,
+                 f_pi_net_arch: list = [64, 64],
+                 f_vf_net_arch: list = [64, 64],
                  window_size: int = 12,
                  prices_feature_name: str = 'Low',
                  signal_feature_names: list = ['Low', 'Volume'],
-                 use_normalized_observations: bool = True,
-                 interval: str = '15m',
+                 use_normalized_observations: bool = False,
+                 interval: str = '5m',
                  symbols: list = ['SPY']):
         self.f_cnn1_kernel_count = f_cnn1_kernel_count
         self.f_cnn1_kernel_size = f_cnn1_kernel_size
+        self.f_pool1_size = f_pool1_size
+        self.f_pool1_stride = f_pool1_stride
         self.f_cnn2_kernel_count = f_cnn2_kernel_count
         self.f_cnn2_kernel_size = f_cnn2_kernel_size
+        self.f_pool2_size = f_pool2_size
+        self.f_pool2_stride = f_pool2_stride
         self.f_linear1_size = f_linear1_size
         self.f_linear2_size = f_linear2_size
+
+        self.f_pi_net_arch = f_pi_net_arch
+        self.f_vf_net_arch = f_vf_net_arch
 
         self.window_size = window_size
         self.prices_feature_name = prices_feature_name
@@ -132,9 +144,19 @@ class Brain:
                 f_cnn2_kernel_size=self._brain_configuration.f_cnn2_kernel_size,
                 f_linear1_size=self._brain_configuration.f_linear1_size,
                 f_linear2_size=self._brain_configuration.f_linear2_size),
+            net_arch=[dict(
+                pi=self._brain_configuration.f_pi_net_arch,
+                vf=self._brain_configuration.f_vf_net_arch)]
         )
 
-        self._model = A2C('MlpPolicy', env, verbose=0, policy_kwargs=policy_kwargs)
+        self._model = A2C('MlpPolicy',
+                          env,
+                          n_steps=30,
+                          verbose=0,
+                          policy_kwargs=policy_kwargs)
+
+        # policy_kwargs = dict(net_arch=[dict(pi=[512, 512], vf=[512, 512])])
+        # self._model = A2C('MlpPolicy', env, verbose=0, policy_kwargs=policy_kwargs)
 
     def _analyze_scenario(self,
                           scenario: Scenario,
@@ -161,10 +183,7 @@ class Brain:
                 break
 
         if render:
-            plt.figure(figsize=(15, 6))
-            plt.cla()
             internal_environment.render_all()
-            plt.show()
 
         return internal_environment, environment, info[0]
 
@@ -192,9 +211,9 @@ class Brain:
     def _build_portfolio_stock_scenario(self, scenario: Scenario):
         dataframe_per_symbol = self._data_repository.retrieve_datas(scenario)
         first_symbol = list(dataframe_per_symbol.keys())[0]
-        initial_portfolio_allocation = {first_symbol: 1.0} # FIXME: This is not configurable
+        initial_portfolio = {first_symbol: 1.0} # FIXME: This is not configurable
 
-        env = PortfolioStocksEnv(initial_portfolio_allocation=initial_portfolio_allocation,
+        env = PortfolioStocksEnv(initial_portfolio=initial_portfolio,
                                  dataframe_per_symbol=dataframe_per_symbol,
                                  window_size=self._brain_configuration.window_size,
                                  prices_feature_name=self._brain_configuration.prices_feature_name,

@@ -11,7 +11,7 @@ class CompositeDataRepository(DataRepository):
         self._combinator_operation = combinator_operation
 
     def get_repository_name(self):
-        repository_name = f"Composite({self._combinator_operation}, "
+        repository_name = f"Co({self._combinator_operation}, "
         first = True
 
         for data_repository in self._data_repositories:

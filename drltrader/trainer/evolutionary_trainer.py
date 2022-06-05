@@ -1,3 +1,4 @@
+import datetime
 import math
 import pandas as pd
 import pygad
@@ -59,6 +60,7 @@ class EvolutionaryTrainer:
         self.solutions_statistics: pd.DataFrame = None
         self.current_population = None
         self.current_timesteps = None
+        self.training_timestamp = None
         self._dna_brain_config_mapper = DnaDecoder(features_per_symbol=self.data_repository.get_columns_per_symbol())
 
     def train(self, training_configuration: TrainingConfiguration) -> BrainConfiguration:
@@ -67,6 +69,7 @@ class EvolutionaryTrainer:
         self.training_configuration = training_configuration
         self.current_population = self.training_configuration.start_population
         self.current_timesteps = self.training_configuration.start_timesteps
+        self.training_timestamp = datetime.datetime.now().strftime('%Y-%m-%d-%H-%M-%S')
         self._initialize_genetic_algorithm()
 
         self.genetic_algorithm.run()
@@ -165,7 +168,7 @@ class EvolutionaryTrainer:
             trainer.solutions_statistics.at[solution_name, 'Brain Configuration'] = brain_configuration
             trainer.solutions_statistics.sort_values(by='Profit', inplace=True, ascending=False)
             if trainer.training_configuration.solutions_statistics_filename is not None:
-                trainer.solutions_statistics.to_csv(trainer.training_configuration.solutions_statistics_filename)
+                trainer.solutions_statistics.to_csv(f"{trainer.training_configuration.solutions_statistics_filename}-{trainer.training_timestamp}.csv")
 
             logger.info(f"Evaluation Profit: {mean_testing_profit}")
             trainer.fitness_cache[solution_name] = mean_testing_profit

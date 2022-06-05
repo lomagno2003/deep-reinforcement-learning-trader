@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 import pickle
+import zlib
 import logging.config
 from datetime import datetime
 
@@ -18,7 +19,7 @@ class CachedDataRepository(DataRepository):
         self._cache_directory = cache_directory
 
     def get_repository_name(self):
-        return f"Cached({self._source_data_repository.get_repository_name()})"
+        return f"Ca({self._source_data_repository.get_repository_name()})"
 
     def retrieve_datas(self, scenario: Scenario):
         self._initialize_directory()
@@ -31,9 +32,11 @@ class CachedDataRepository(DataRepository):
             return dataframe_per_symbol
 
     def _parse_cache_path(self, scenario: Scenario):
-        return f'{self._cache_directory}/' \
+        path = f'{self._cache_directory}/' \
                f'{self.get_repository_name()}_' \
                f'{scenario}_'
+
+        return path
 
     def _initialize_directory(self):
         directory_exists = (Path.cwd() / self._cache_directory).exists()

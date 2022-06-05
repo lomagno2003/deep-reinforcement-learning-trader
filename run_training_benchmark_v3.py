@@ -9,19 +9,20 @@ import numpy as np
 from drltrader.brain.brain import Brain, BrainConfiguration
 from drltrader.brain.brain_repository_file import BrainRepositoryFile
 from drltrader.data import Scenario
-from drltrader.data.ohlcv_data_repository import AlpacaOHLCVDataRepository
-from drltrader.data.cached_data_repository import CachedDataRepository
-from drltrader.data.indicators_data_repository import IndicatorsDataRepository
+from drltrader.data.data_repositories import DataRepositories
 from drltrader.observers.simple_observer import PrintEnvObserver
 
 logging.config.fileConfig('log.ini', disable_existing_loggers=False)
 logger = logging.getLogger(__name__)
 
 
+# Manually architect a brain and re-train it every week
 class TrainingBenchmarker:
     def __init__(self):
         self._brain_repository = BrainRepositoryFile()
-        self._data_repository = CachedDataRepository(IndicatorsDataRepository(AlpacaOHLCVDataRepository()))
+        self._data_repository = DataRepositories.build_normalized_multi_time_interval_data_repository(
+            exclude_normalized_columns=['5m_Close']
+        )
 
     def run(self):
         root_datetime = datetime.now()
@@ -46,22 +47,33 @@ class TrainingBenchmarker:
             logger.info(f"The average profit so far is {np.average(testing_profits)}")
 
     def learn_initial_brain_on_datetime(self, ref_datetime: datetime):
+        logger.info(f"Training initial brain")
         self._initiate_initial_scenarios_on_date(ref_datetime=ref_datetime)
         best_brain_configuration: BrainConfiguration = BrainConfiguration(
             f_cnn1_kernel_count=64,
             f_cnn1_kernel_size=8,
-            f_cnn2_kernel_count=64,
+            f_pool1_size=4,
+            f_pool1_stride=2,
+            f_cnn2_kernel_count=32,
             f_cnn2_kernel_size=4,
+            f_pool2_size=4,
+            f_pool2_stride=2,
             f_linear1_size=512,
             f_linear2_size=256,
-            window_size=16,
-            interval='1h',
-            # signal_feature_names=[
-            #     "SMA_4", "SMA_6", "SMA_16", "RSI_16", "MOM_4", "MOM_18", "ROC_12"
-            # ],
+            f_pi_net_arch=[64, 64],
+            f_vf_net_arch=[64, 64],
+            window_size=32,
+            interval='5m',
+            prices_feature_name='5m_Close',
             signal_feature_names=self._data_repository.get_columns_per_symbol(),
+            # signal_feature_names=[
+            #     '5m_VW_MACD_4_8_3', '5m_RSI_14', '5m_OBV'
+            # ],
+            # symbols=[
+            #     'TDOC', 'ETSY', 'MELI', 'SE', 'SQ', 'DIS', 'TSLA', 'AAPL', 'MSFT', 'SHOP', 'FB'
+            # ]
             symbols=[
-                'TDOC', 'ETSY', 'MELI', 'SE', 'SQ', 'DIS', 'TSLA', 'AAPL', 'MSFT', 'SHOP', 'FB'
+                'TSLA'
             ]
         )
         best_brain = Brain(data_repository=self._data_repository,
@@ -71,13 +83,10 @@ class TrainingBenchmarker:
         return best_brain
 
     def train_on_datetime(self, best_brain: Brain, ref_datetime: datetime):
-        # Find best brain configuration
-        logger.info("Finding best brain configuration")
-        self._initiate_scenarios_on_date(ref_datetime=ref_datetime)
-
         # Train brain
         logger.info("Training best brain")
-        best_brain.learn(self._training_scenarios[0], total_timesteps=10000)
+        self._initiate_scenarios_on_date(ref_datetime=ref_datetime)
+        best_brain.learn(self._training_scenarios[0], total_timesteps=5000)
 
         # Save brain
         logger.info("Saving best brain")
@@ -88,6 +97,7 @@ class TrainingBenchmarker:
             logger.info(f"Testing brain on scenario {testing_scenario}")
 
             info = best_brain.evaluate(testing_scenario=testing_scenario,
+                                       render=True,
                                        observer=PrintEnvObserver())
             profit = info['total_profit'] if 'total_profit' in info else info['current_profit']
 
@@ -116,6 +126,7 @@ class TrainingBenchmarker:
 
         self._initial_training_scenarios = [Scenario(start_date=training_start_date, end_date=training_end_date)]
         self._initial_validation_scenarios = [Scenario(start_date=validation_start_date, end_date=validation_end_date)]
+        self._initial_training_scenarios = self._initial_validation_scenarios
 
     def _initiate_scenarios_on_date(self, ref_datetime: datetime = datetime.now()):
         est_timezone = timezone('EST')

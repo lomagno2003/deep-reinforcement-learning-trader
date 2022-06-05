@@ -17,7 +17,7 @@ class IndicatorsDataRepository(DataRepository):
         self._define_indicators()
 
     def get_repository_name(self):
-        return f"Indicators({self._source_data_repository.get_repository_name()})"
+        return f"I({self._source_data_repository.get_repository_name()})"
 
     def retrieve_datas(self, scenario: Scenario):
         dataframe_per_symbol = self._source_data_repository.retrieve_datas(scenario)

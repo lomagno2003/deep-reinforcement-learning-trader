@@ -2,8 +2,9 @@ import unittest
 from datetime import datetime
 from datetime import timedelta
 
-from drltrader.brain.brain import Brain
+from drltrader.brain.brain import Brain, BrainConfiguration
 from drltrader.data import Scenario
+from drltrader.data.scenarios import Scenarios
 from drltrader.observers import Order
 from drltrader.observers.simple_observer import CallbackObserver
 
@@ -12,20 +13,15 @@ class BrainTestCase(unittest.TestCase):
     def __init__(self, name):
         super(BrainTestCase, self).__init__(name)
 
-        start_day = 13
-        end_day = start_day + 4
-
-        self.training_scenario_multi_stock = Scenario(symbols=['TSLA', 'AAPL', 'MSFT'],
-                                                      start_date=datetime(year=2022, month=3, day=start_day),
-                                                      end_date=datetime(year=2022, month=3, day=end_day))
-        self.testing_scenario_multi_stock = self.training_scenario_multi_stock
-        self.observing_scenario_multi_stock = Scenario(symbols=['TSLA', 'AAPL', 'MSFT'],
-                                                       start_date=datetime.now() - timedelta(days=10),
-                                                       end_date=datetime.now() - timedelta(days=5))
+        self.training_scenario_multi_stock = Scenarios.last_market_weeks(start_week=3,
+                                                                         end_week=1)
+        self.testing_scenario_multi_stock = Scenarios.last_market_week()
+        self.observing_scenario_multi_stock = Scenarios.last_market_week()
 
     def test_learn_evaluate_multi_stock(self):
         # Arrange
-        brain: Brain = Brain()
+        brain: Brain = Brain(brain_configuration=BrainConfiguration(symbols=['TSLA', 'AAPL', 'MSFT'],
+                                                                    interval='5m'))
 
         # Act
         brain.learn(training_scenario=self.training_scenario_multi_stock)

@@ -6,7 +6,7 @@ class StaticDataRepository(DataRepository):
         self._dataframe_per_symbol = dataframe_per_symbol
 
     def get_repository_name(self):
-        return "Static"
+        return "St"
 
     def retrieve_datas(self, scenario: Scenario):
         return self._dataframe_per_symbol

@@ -5,7 +5,9 @@ from datetime import timedelta
 
 from drltrader.brain.brain import BrainConfiguration
 from drltrader.data import Scenario
+from drltrader.data.scenarios import Scenarios
 from drltrader.trainer.evolutionary_trainer import EvolutionaryTrainer, TrainingConfiguration
+from drltrader.data.data_repositories import DataRepositories
 
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 
@@ -16,14 +18,10 @@ class EvolutionaryTrainerTestCase(unittest.TestCase):
 
     def test_short_train_single_stock(self):
         # Arrange
-        trainer: EvolutionaryTrainer = EvolutionaryTrainer()
+        trainer: EvolutionaryTrainer = EvolutionaryTrainer(data_repository=DataRepositories.build_multi_time_interval_data_repository())
 
-        training_scenarios = [Scenario(symbol='TSLA',
-                                       start_date=datetime.now() - timedelta(days=30),
-                                       end_date=datetime.now())]
-        testing_scenarios = [Scenario(symbol='TSLA',
-                                      start_date=datetime.now() - timedelta(days=7),
-                                      end_date=datetime.now())]
+        training_scenarios = [Scenarios.last_market_week()]
+        testing_scenarios = [Scenarios.last_market_week()]
         training_configuration = TrainingConfiguration(training_scenarios=training_scenarios,
                                                        validation_scenarios=testing_scenarios)
 

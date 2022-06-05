@@ -39,11 +39,11 @@ class PortfolioFeaturesExtractorTestCase(unittest.TestCase):
                             interval='1d')
         data_repository = CachedDataRepository(IndicatorsDataRepository(AlpacaOHLCVDataRepository()))
         dataframe_per_symbol = data_repository.retrieve_datas(scenario)
-        initial_portfolio_allocation = {'TSLA': 1.0}
+        initial_portfolio = {'TSLA': 1.0}
 
         self._env = PortfolioStocksEnv(window_size=16,
                                        dataframe_per_symbol=dataframe_per_symbol,
-                                       initial_portfolio_allocation=initial_portfolio_allocation)
+                                       initial_portfolio=initial_portfolio)
 
         self._testing_observation = self._env.reset()
         self._features_extractor = PortfolioFeaturesExtractor(observation_space=self._env.observation_space)

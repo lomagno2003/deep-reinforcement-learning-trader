@@ -4,22 +4,24 @@ from datetime import datetime
 from datetime import timedelta
 
 from drltrader.data import Scenario
+from drltrader.data.scenarios import Scenarios
 from drltrader.envs.portfolio_stocks_env import PortfolioStocksEnv
 from drltrader.data.ohlcv_data_repository import OHLCVDataRepository
 from drltrader.data.ohlcv_data_repository import AlpacaOHLCVDataRepository
 from drltrader.data.indicators_data_repository import IndicatorsDataRepository
+from drltrader.data.cached_data_repository import CachedDataRepository
 
 
 class PortfolioStocksEnvTestCase(unittest.TestCase):
     def test_init(self):
         # Arrange
         dataframe_per_symbol = self._build_testing_dataframe_per_symbol()
-        initial_portfolio_allocation = {'TSLA': 1.0}
+        initial_portfolio = {'TSLA': 1.0}
 
         # Act
         environment = PortfolioStocksEnv(window_size=8,
                                          dataframe_per_symbol=dataframe_per_symbol,
-                                         initial_portfolio_allocation=initial_portfolio_allocation)
+                                         initial_portfolio=initial_portfolio)
 
         # Assert
         self.assertIsNotNone(environment)
@@ -29,7 +31,7 @@ class PortfolioStocksEnvTestCase(unittest.TestCase):
         environment: PortfolioStocksEnv = self._build_testing_environment()
 
         # Act
-        current_portfolio_value = environment.current_portfolio_value()
+        current_portfolio_value = environment.portfolio_value()
 
         # Assert
         self.assertIsNotNone(current_portfolio_value)
@@ -39,7 +41,7 @@ class PortfolioStocksEnvTestCase(unittest.TestCase):
         environment: PortfolioStocksEnv = self._build_testing_environment()
 
         # Act
-        current_profit = environment.current_profit()
+        current_profit = environment.profit()
 
         # Assert
         self.assertIsNotNone(current_profit)
@@ -49,8 +51,8 @@ class PortfolioStocksEnvTestCase(unittest.TestCase):
         environment: PortfolioStocksEnv = self._build_testing_environment()
 
         # Act
-        environment._transfer_allocations('TSLA', 'long', 'AAPL', 'short', environment._current_tick)
-        current_profit = environment.current_profit()
+        environment._transfer_allocations('TSLA', 'long', 'AAPL', 'short')
+        current_profit = environment.profit()
 
         # Assert
         self.assertIsNotNone(current_profit)
@@ -69,7 +71,7 @@ class PortfolioStocksEnvTestCase(unittest.TestCase):
                 break
 
         # Assert
-        current_profit = environment.current_profit()
+        current_profit = environment.profit()
         self.assertNotEqual(1.0, current_profit)
 
     def test_append_data(self):
@@ -86,11 +88,11 @@ class PortfolioStocksEnvTestCase(unittest.TestCase):
         first_dataframe_per_symbol = data_repository.retrieve_datas(first_scenario)
         second_dataframe_per_symbol = data_repository.retrieve_datas(second_scenario)
 
-        initial_portfolio_allocation = {'TSLA': 1.0}
+        initial_portfolio = {'TSLA': 1.0}
 
         environment = PortfolioStocksEnv(window_size=8,
                                          dataframe_per_symbol=first_dataframe_per_symbol,
-                                         initial_portfolio_allocation=initial_portfolio_allocation)
+                                         initial_portfolio=initial_portfolio)
 
         # Act
         while True:
@@ -107,22 +109,19 @@ class PortfolioStocksEnvTestCase(unittest.TestCase):
         self.assertFalse(done)
 
     def _build_testing_dataframe_per_symbol(self):
-        scenario = Scenario(symbols=['TSLA', 'MSFT', 'AAPL'],
-                            start_date=datetime.now() - timedelta(days=30),
-                            end_date=datetime.now(),
-                            interval='5m')
-
-        dataframe_per_symbol = IndicatorsDataRepository(AlpacaOHLCVDataRepository()).retrieve_datas(scenario)
+        scenario = Scenarios.last_market_week(['TSLA', 'AAPL'], '5m')
+        data_repository = CachedDataRepository(IndicatorsDataRepository(AlpacaOHLCVDataRepository()))
+        dataframe_per_symbol = data_repository.retrieve_datas(scenario)
 
         return dataframe_per_symbol
 
     def _build_testing_environment(self) -> PortfolioStocksEnv:
         dataframe_per_symbol = self._build_testing_dataframe_per_symbol()
-        initial_portfolio_allocation = {'TSLA': 1.0}
+        initial_portfolio = {'TSLA': 1.0}
 
         environment = PortfolioStocksEnv(window_size=8,
                                          dataframe_per_symbol=dataframe_per_symbol,
-                                         initial_portfolio_allocation=initial_portfolio_allocation)
+                                         initial_portfolio=initial_portfolio)
 
         return environment
 

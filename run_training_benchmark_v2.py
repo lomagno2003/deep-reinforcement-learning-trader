@@ -8,19 +8,18 @@ from pytz import timezone
 from drltrader.brain.brain import Brain, BrainConfiguration
 from drltrader.brain.brain_repository_file import BrainRepositoryFile
 from drltrader.data import Scenario
-from drltrader.data.ohlcv_data_repository import AlpacaOHLCVDataRepository
-from drltrader.data.cached_data_repository import CachedDataRepository
-from drltrader.data.indicators_data_repository import IndicatorsDataRepository
+from drltrader.data.data_repositories import DataRepositories
 from drltrader.trainer.evolutionary_trainer import EvolutionaryTrainer, TrainingConfiguration
 
 logging.config.fileConfig('log.ini', disable_existing_loggers=False)
 logger = logging.getLogger(__name__)
 
 
+# Uses genetic algorithms to architect a single brain and then re-train it every week
 class TrainingBenchmarker:
     def __init__(self):
         self._brain_repository = BrainRepositoryFile()
-        self._data_repository = CachedDataRepository(IndicatorsDataRepository(AlpacaOHLCVDataRepository()))
+        self._data_repository = DataRepositories.build_multi_time_interval_data_repository()
 
     def run(self):
         root_datetime = datetime.now()

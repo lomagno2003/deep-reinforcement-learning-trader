@@ -8,19 +8,18 @@ from pytz import timezone
 from drltrader.brain.brain import Brain, BrainConfiguration
 from drltrader.brain.brain_repository_file import BrainRepositoryFile
 from drltrader.data import Scenario
-from drltrader.data.ohlcv_data_repository import AlpacaOHLCVDataRepository
-from drltrader.data.cached_data_repository import CachedDataRepository
-from drltrader.data.indicators_data_repository import IndicatorsDataRepository
+from drltrader.data.data_repositories import DataRepositories
 from drltrader.trainer.evolutionary_trainer import EvolutionaryTrainer, TrainingConfiguration
 
 logging.config.fileConfig('log.ini', disable_existing_loggers=False)
 logger = logging.getLogger(__name__)
 
 
+# Use genetic algorithms to re-architect the brain every week
 class TrainingBenchmarker:
     def __init__(self):
         self._brain_repository = BrainRepositoryFile()
-        self._data_repository = CachedDataRepository(IndicatorsDataRepository(AlpacaOHLCVDataRepository()))
+        self._data_repository = DataRepositories.build_multi_time_interval_data_repository()
 
         self._trainer: EvolutionaryTrainer = EvolutionaryTrainer(data_repository=self._data_repository)
 
@@ -99,14 +98,14 @@ class TrainingBenchmarker:
     def _initiate_training_configuration(self):
         self._training_configuration = TrainingConfiguration(training_scenarios=self._training_scenarios,
                                                              validation_scenarios=self._validation_scenarios,
-                                                             generations=6,
-                                                             start_population=8,
+                                                             generations=10,
+                                                             start_population=20,
                                                              stop_population=4,
                                                              step_population=-2,
                                                              start_timesteps=5000,
                                                              stop_timesteps=10000,
-                                                             step_timesteps=100,
-                                                             solutions_statistics_filename='logs/solutions.csv')
+                                                             step_timesteps=500,
+                                                             solutions_statistics_filename='logs/solutions')
 
 
 if __name__ == '__main__':
