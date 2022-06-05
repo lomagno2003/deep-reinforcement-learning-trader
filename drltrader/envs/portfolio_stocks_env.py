@@ -297,6 +297,13 @@ class PortfolioStocksEnv(gym.Env):
         if self._done and self._rendering_enabled:
             self.render_all()
 
+        # FIXME: Remove this, is just for testing
+        if self._done:
+            # Log stats
+            portfolio_history_dataframe = pd.DataFrame.from_dict(self._portfolio_history, orient='index')
+            logger.info(f"The profit is {self.profit()}. Here are the portfolio updates:")
+            logger.info(portfolio_history_dataframe.to_string())
+
         observation = self._get_observation(self.current_tick)
         reward = self._calculate_reward()
         done = self._done
@@ -444,9 +451,9 @@ class PortfolioStocksEnv(gym.Env):
         )
         plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
-        plt.show(block=False)
+        plt.show()
 
         # Log stats
         portfolio_history_dataframe = pd.DataFrame.from_dict(self._portfolio_history, orient='index')
-        logger.info("Here are the portfolio updates:")
+        logger.info(f"The profit is {self.profit()}. Here are the portfolio updates:")
         logger.info(portfolio_history_dataframe.to_string())

@@ -29,31 +29,31 @@ class TrainingBenchmarker:
         while True:
             logger.info("Training brain")
             best_brain.learn(training_scenario=self._scenario,
-                             total_timesteps=2000,
-                             rendering_enabled=True)
+                             total_timesteps=40000,
+                             rendering_enabled=False)
 
     def build_initial_brain_on_datetime(self):
         logger.info(f"Build initial brain")
         best_brain_configuration: BrainConfiguration = BrainConfiguration(
             f_cnn1_kernel_count=64,
-            f_cnn1_kernel_size=32,
+            f_cnn1_kernel_size=4,
             f_pool1_size=4,
             f_pool1_stride=2,
-            f_cnn2_kernel_count=32,
-            f_cnn2_kernel_size=32,
+            f_cnn2_kernel_count=64,
+            f_cnn2_kernel_size=4,
             f_pool2_size=4,
             f_pool2_stride=2,
             f_linear1_size=512,
             f_linear2_size=256,
-            f_pi_net_arch=[64, 64],
-            f_vf_net_arch=[64, 64],
-            window_size=128,
-            interval='5m',
+            f_pi_net_arch=[256, 256],
+            f_vf_net_arch=[256, 256],
+            window_size=1,
+            interval='15m',
             prices_feature_name='5m_Close',
-            # signal_feature_names=self._data_repository.get_columns_per_symbol(),
-            signal_feature_names=[
-                '60m_RSI_4', '60m_VW_MACD_16_32_12', '60m_MOM_4'
-            ],
+            signal_feature_names=self._data_repository.get_columns_per_symbol(),
+            # signal_feature_names=[
+            #     '60m_RSI_4'
+            # ],
             # symbols=[
             #     'TDOC', 'ETSY', 'MELI', 'SE', 'SQ', 'DIS', 'TSLA', 'AAPL', 'MSFT', 'SHOP', 'FB'
             # ]

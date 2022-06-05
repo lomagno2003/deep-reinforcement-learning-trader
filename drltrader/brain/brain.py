@@ -14,6 +14,7 @@ from drltrader.data import Scenario
 from drltrader.envs.portfolio_stocks_env import PortfolioStocksEnv
 from drltrader.envs.portfolio_features_extractor import PortfolioFeaturesExtractor
 from drltrader.observers import Observer
+from drltrader.brain.ga_model import GAModel
 
 logging.config.fileConfig('log.ini', disable_existing_loggers=False)
 logger = logging.getLogger(__name__)
@@ -33,6 +34,7 @@ class BrainConfiguration:
                  f_linear2_size: int = 64,
                  f_pi_net_arch: list = [64, 64],
                  f_vf_net_arch: list = [64, 64],
+
                  window_size: int = 12,
                  prices_feature_name: str = 'Low',
                  signal_feature_names: list = ['Low', 'Volume'],
@@ -140,6 +142,27 @@ class Brain:
         self._observing = False
 
     def _init_model(self, env):
+        # policy_kwargs = dict(
+        #     features_extractor_class=PortfolioFeaturesExtractor,
+        #     features_extractor_kwargs=dict(
+        #         f_cnn1_kernel_count=self._brain_configuration.f_cnn1_kernel_count,
+        #         f_cnn1_kernel_size=self._brain_configuration.f_cnn1_kernel_size,
+        #         f_cnn2_kernel_count=self._brain_configuration.f_cnn2_kernel_count,
+        #         f_cnn2_kernel_size=self._brain_configuration.f_cnn2_kernel_size,
+        #         f_linear1_size=self._brain_configuration.f_linear1_size,
+        #         f_linear2_size=self._brain_configuration.f_linear2_size),
+        #     net_arch=[dict(
+        #         pi=self._brain_configuration.f_pi_net_arch,
+        #         vf=self._brain_configuration.f_vf_net_arch)]
+        # )
+
+        # self._model = A2C('MlpPolicy',
+        #                   env,
+        #                   n_steps=30,
+        #                   verbose=0,
+        #                   ent_coef=0.01,
+        #                   policy_kwargs=policy_kwargs)
+
         policy_kwargs = dict(
             features_extractor_class=PortfolioFeaturesExtractor,
             features_extractor_kwargs=dict(
@@ -148,17 +171,11 @@ class Brain:
                 f_cnn2_kernel_count=self._brain_configuration.f_cnn2_kernel_count,
                 f_cnn2_kernel_size=self._brain_configuration.f_cnn2_kernel_size,
                 f_linear1_size=self._brain_configuration.f_linear1_size,
-                f_linear2_size=self._brain_configuration.f_linear2_size),
-            net_arch=[dict(
-                pi=self._brain_configuration.f_pi_net_arch,
-                vf=self._brain_configuration.f_vf_net_arch)]
+                f_linear2_size=self._brain_configuration.f_linear2_size)
         )
 
-        self._model = A2C('MlpPolicy',
-                          env,
-                          n_steps=30,
-                          verbose=0,
-                          policy_kwargs=policy_kwargs)
+        self._model = GAModel(env=env,
+                              policy_kwargs=policy_kwargs)
 
         # policy_kwargs = dict(net_arch=[dict(pi=[512, 512], vf=[512, 512])])
         # self._model = A2C('MlpPolicy', env, verbose=0, policy_kwargs=policy_kwargs)
@@ -183,12 +200,12 @@ class Brain:
 
         while True:
             obs = obs[np.newaxis, ...]
-            action, _states = self._model.predict(obs[0])
+            action, _ = self._model.predict(obs[0])
             obs, rewards, done, info = environment.step(action)
             if done[0]:
                 break
 
-        if render:
+        if rendering_enabled:
             internal_environment.render_all()
 
         return internal_environment, environment, info[0]

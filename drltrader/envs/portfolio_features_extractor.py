@@ -24,12 +24,14 @@ class PortfolioFeaturesExtractor(BaseFeaturesExtractor):
 
         # TODO: Remove me
         self.cnn = nn.Sequential(
-            # nn.Conv1d(n_input_channels, f_cnn1_kernel_count, kernel_size=f_cnn1_kernel_size, stride=1, padding=f_cnn1_kernel_size),
-            # nn.ReLU(),
-            # nn.MaxPool1d(f_pool1_size, stride=f_pool1_stride),
-            # nn.Conv1d(f_cnn1_kernel_count, f_cnn2_kernel_count, kernel_size=f_cnn2_kernel_size, stride=2, padding=f_cnn2_kernel_size),
-            # nn.ReLU(),
-            # nn.MaxPool1d(f_pool2_size, stride=f_pool2_stride),
+            nn.Conv1d(n_input_channels, f_cnn1_kernel_count, kernel_size=f_cnn1_kernel_size, stride=1, padding=f_cnn1_kernel_size),
+            nn.ReLU(),
+            nn.Dropout(),
+            nn.MaxPool1d(f_pool1_size, stride=f_pool1_stride),
+            nn.Conv1d(f_cnn1_kernel_count, f_cnn2_kernel_count, kernel_size=f_cnn2_kernel_size, stride=2, padding=f_cnn2_kernel_size),
+            nn.ReLU(),
+            nn.Dropout(),
+            nn.MaxPool1d(f_pool2_size, stride=f_pool2_stride),
             nn.Flatten(),
         )
 
@@ -52,6 +54,7 @@ class PortfolioFeaturesExtractor(BaseFeaturesExtractor):
         self.linear = nn.Sequential(
             nn.Linear(n_flatten, f_linear1_size),
             nn.ReLU(),
+            nn.Dropout(),
             nn.Linear(f_linear1_size, f_linear2_size),
             nn.ReLU())
 
